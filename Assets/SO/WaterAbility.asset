@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2847abccb1cef214a86f81e929eea16a, type: 3}
+  m_Name: WaterAbility
+  m_EditorClassIdentifier: 
+  element: 1
+  animationName: WaterAbility
+  cooldown: 1
+  projectilePrefab: {fileID: 8632092140481772519, guid: 57adfae32a722124c982772dabb10850, type: 3}

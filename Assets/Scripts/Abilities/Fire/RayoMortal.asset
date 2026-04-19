@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b2ae0c408486b64f9822806dd89f5dd, type: 3}
+  m_Name: RayoMortal
+  m_EditorClassIdentifier: 
+  abilityName: Rayo Mortal
+  description: "Rayo que hace da\xF1o grave y paraliza."
+  element: 0
+  icon: {fileID: 21300000, guid: ec413e63c48b1224ba61827cc1539583, type: 3}
+  cooldown: 1
+  beamPrefab: {fileID: 1589819868445927582, guid: 93d9c4ad9870c4144bc920842c0e2624, type: 3}
