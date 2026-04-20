@@ -12,9 +12,23 @@ public class TerremotoAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        Vector3 spawnPos = owner.transform.position;
-        spawnPos.y += spawnOffset;
+        if (areaPrefab == null)
+        {
+            Debug.LogError($"[{nameof(TerremotoAbility)}] areaPrefab no asignado.", this);
+            return;
+        }
 
-        Instantiate(areaPrefab, spawnPos, Quaternion.identity);
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
+        {
+            Debug.LogError($"[{nameof(TerremotoAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
+            return;
+        }
+
+        Vector3 spawnPos  = owner.transform.position;
+        spawnPos.y       += spawnOffset;
+
+        EarthquakeArea area = Instantiate(areaPrefab, spawnPos, Quaternion.identity);
+        area.Initialize(user.TargetLayers);
     }
 }

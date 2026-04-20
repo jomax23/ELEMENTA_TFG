@@ -17,6 +17,9 @@ MonoBehaviour:
   element: 2
   icon: {fileID: 21300000, guid: 45196540e81a190489bfdbc151573ed4, type: 3}
   cooldown: 2
+  minRange: 2.3
+  maxRange: 20
+  aiPriority: 1
   projectilePrefab: {fileID: 994275371397674478, guid: 57adfae32a722124c982772dabb10850, type: 3}
   projectileCount: 5
   timeBetweenShots: 0.1

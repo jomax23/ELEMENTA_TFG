@@ -11,28 +11,21 @@ public class RayoMortalAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
         {
-            Debug.LogError("El Player no tiene PlayerMovement");
+            Debug.LogError($"[{nameof(RayoMortalAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
 
         Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
         if (spawnPoint == null)
         {
-            Debug.LogError("No existe ProjectileSpawnPoint en el Player");
+            Debug.LogError($"[{nameof(RayoMortalAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);
             return;
         }
 
-        int directionX = movement.FacingDirection;
-
-        RayoMortalProjectile beam = Instantiate(
-            beamPrefab,
-            spawnPoint.position,
-            Quaternion.identity
-        );
-
-        beam.Initialize(directionX);
+        RayoMortalProjectile beam = Instantiate(beamPrefab, spawnPoint.position, Quaternion.identity);
+        beam.Initialize(user.FacingDirection, user.TargetLayers);
     }
 }

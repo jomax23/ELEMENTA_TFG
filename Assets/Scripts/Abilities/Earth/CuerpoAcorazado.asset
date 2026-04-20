@@ -17,5 +17,8 @@ MonoBehaviour:
   element: 1
   icon: {fileID: 21300000, guid: ec6a6dea156141e409be8a8eaab98539, type: 3}
   cooldown: 1
+  minRange: 2.3
+  maxRange: 20
+  aiPriority: 0.6
   absorptionAmount: 50
   speedMultiplier: 0.5

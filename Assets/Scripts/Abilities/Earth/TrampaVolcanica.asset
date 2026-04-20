@@ -18,5 +18,8 @@ MonoBehaviour:
   element: 1
   icon: {fileID: 21300000, guid: 5fde0fc2d34db544fa87b7c15351754c, type: 3}
   cooldown: 3
+  minRange: 2.3
+  maxRange: 5
+  aiPriority: 0.3
   trapPrefab: {fileID: 7050849497990865498, guid: fb6bb6d85cbfefd49b6532f6b55f42e6, type: 3}
   spawnOffsetX: 0

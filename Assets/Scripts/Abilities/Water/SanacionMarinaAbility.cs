@@ -21,43 +21,34 @@ public class SanacionMarinaAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        AbilityCoroutineRunner runner =
-            owner.GetComponent<AbilityCoroutineRunner>();
-
-        if (runner == null)
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
         {
-            Debug.LogError("El Player no tiene AbilityCoroutineRunner");
+            Debug.LogError($"[{nameof(SanacionMarinaAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
 
         Health health = owner.GetComponent<Health>();
         if (health == null)
         {
-            Debug.LogError("El Player no tiene PlayerHealth");
+            Debug.LogError($"[{nameof(SanacionMarinaAbility)}] Health no encontrado en {owner.name}.", owner);
             return;
         }
 
-        runner.RunCoroutine(
-            HealWithVFX(owner.transform, health)
-        );
+        user.RunCoroutine(HealWithVFX(owner.transform, health));
     }
 
-    private IEnumerator HealWithVFX(
-        Transform owner,
-        Health health
-    )
+    private IEnumerator HealWithVFX(Transform owner, Health health)
     {
         GameObject healVfxInstance = null;
         GameObject domeVfxInstance = null;
 
-        // 🌊 VFX de curación
         if (healVfxPrefab != null)
         {
             healVfxInstance = Instantiate(healVfxPrefab, owner);
             healVfxInstance.transform.localPosition = healVfxOffset;
         }
 
-        // 🫧 VFX de cúpula
         if (domeVfxPrefab != null)
         {
             domeVfxInstance = Instantiate(domeVfxPrefab, owner);
@@ -76,7 +67,6 @@ public class SanacionMarinaAbility : AbilityData
             yield return null;
         }
 
-        // 🧹 Limpiar VFX
         if (healVfxInstance != null)
             Destroy(healVfxInstance);
 

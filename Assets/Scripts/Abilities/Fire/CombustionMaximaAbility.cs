@@ -10,7 +10,7 @@ public class CombustionMaximaAbility : AbilityData
     [Header("Air Beam Phase")]
     [SerializeField] private GameObject airBeamPrefab;
     [SerializeField] private float airBeamDuration = 1f;
-    [SerializeField] private float maxDistance = 12f;
+    [SerializeField] private float maxDistance     = 12f;
 
     [Header("Fireball")]
     [SerializeField] private FireballProjectile fireballPrefab;
@@ -20,96 +20,45 @@ public class CombustionMaximaAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        AbilityCoroutineRunner runner =
-            owner.GetComponent<AbilityCoroutineRunner>();
-
-        if (runner == null)
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
         {
-            Debug.LogError("Falta AbilityCoroutineRunner en el Player");
+            Debug.LogError($"[{nameof(CombustionMaximaAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
-
-        runner.RunCoroutine(Execute(owner));
-    }
-
-    private IEnumerator Execute(GameObject owner)
-    {
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
-            yield break;
-
-        int directionX = movement.FacingDirection;
-        Vector3 dir = Vector3.right * directionX;
 
         Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
         if (spawnPoint == null)
         {
-            Debug.LogError("No existe ProjectileSpawnPoint");
-            yield break;
+            Debug.LogError($"[{nameof(CombustionMaximaAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);
+            return;
         }
 
-        // =========================
-        // 🔎 Detectar obstáculo
-        // =========================
-        float beamDistance = maxDistance;
-        Vector3 endPoint = spawnPoint.position + dir * maxDistance;
+        user.RunCoroutine(Execute(user, spawnPoint));
+    }
 
-        RaycastHit hit;
+    private IEnumerator Execute(IAbilityUser user, Transform spawnPoint)
+    {
+        int     directionX = user.FacingDirection;
+        Vector3 dir        = Vector3.right * directionX;
 
-        if (Physics.Raycast(
-                spawnPoint.position,
-                dir,
-                out hit,
-                maxDistance,
-                obstacleLayers
-            ))
-        {
-            endPoint = hit.point;
-        }
-        
-        
-        // =========================
-        // Mostrar haz de aire
-        // =========================
-        /*
-        GameObject airBeam = Instantiate(
-            airBeamPrefab,
-            spawnPoint.position,
-            Quaternion.identity
-        );
-
-        airBeam.transform.up = dir;
-        float halfLength = airBeam.transform.localScale.y;
-        airBeam.transform.position += dir * halfLength;
-        */
-        GameObject beamObj = Instantiate(
-            airBeamPrefab,
-            Vector3.zero,
-            Quaternion.identity
-        );
+        // ── Mostrar haz de aire ──────────────────────────────────────────────
+        GameObject beamObj = Instantiate(airBeamPrefab, Vector3.zero, Quaternion.identity);
 
         CombustionBeam beam = beamObj.GetComponent<CombustionBeam>();
-
-        beam.Initialize(
-            spawnPoint,
-            dir,
-            maxDistance,
-            obstacleLayers,
-            airBeamDuration
-        );
+        beam.Initialize(spawnPoint, dir, maxDistance, obstacleLayers, airBeamDuration);
 
         yield return new WaitForSeconds(airBeamDuration);
 
         Destroy(beamObj);
-        
-        // Crear bola de fuego
-        // =========================
+
+        // ── Crear bola de fuego con la capa correcta ─────────────────────────
         FireballProjectile fireball = Instantiate(
             fireballPrefab,
             spawnPoint.position,
             Quaternion.Euler(0f, 0f, 90 * directionX)
         );
 
-        fireball.Initialize(directionX);
+        fireball.Initialize(directionX, user.TargetLayers);
     }
 }

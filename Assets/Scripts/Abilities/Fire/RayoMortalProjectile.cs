@@ -3,18 +3,15 @@ using UnityEngine;
 public class RayoMortalProjectile : MonoBehaviour
 {
     [Header("Beam Settings")]
-    [SerializeField] private float damage = 20f;
+    [SerializeField] private float damage       = 20f;
     [SerializeField] private float stunDuration = 2f;
-    [SerializeField] private float lifetime = 0.15f;
+    [SerializeField] private float lifetime     = 0.15f;
 
-    [Header("Target Filtering")]
-    [SerializeField] private LayerMask targetLayers;
+    private LayerMask targetLayers;
 
-    private int facingDirection;
-
-    public void Initialize(int directionX)
+    public void Initialize(int directionX, LayerMask layers)
     {
-        facingDirection = directionX;
+        targetLayers = layers;
 
         Vector3 dir = Vector3.right * directionX;
 
@@ -34,8 +31,7 @@ public class RayoMortalProjectile : MonoBehaviour
             return;
 
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
-        if (target == null)
-            return;
+        if (target == null) return;
 
         target.ApplyDamage(damage);
         target.ApplyStun(stunDuration);

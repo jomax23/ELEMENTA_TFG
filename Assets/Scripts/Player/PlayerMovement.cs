@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
-public class PlayerMovement : MonoBehaviour, IAbilityTarget
+[RequireComponent(typeof(Health))]
+public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 6f;
@@ -24,8 +26,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
     private PlayerArmor armor;
     private float armorSpeedMultiplier = 1f;
 
-
-
     [Header("Input")]
     [SerializeField] private InputActionReference moveAction;
     [SerializeField] private InputActionReference sprintAction;
@@ -33,19 +33,25 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
     [SerializeField] private InputActionReference punchAction;
 
     [Header("Health")]
-    [SerializeField] private float health = 100f;
-    
-    
+    private Health health;
+
+    [Header("Combat")]
+    [Tooltip("Capa(s) que deben recibir daño cuando el player lanza una habilidad. " +
+             "Normalmente la capa 'Enemy'.")]
+    [SerializeField] private LayerMask targetLayers;
+
+    // ── IAbilityUser ────────────────────────────────────────────────────────────
+    public int       FacingDirection { get; private set; } = 1;
+    public LayerMask TargetLayers    => targetLayers;
+    public void RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
+    // ────────────────────────────────────────────────────────────────────────────
+
     private CharacterController characterController;
     private Animator animator;
 
     private Vector3 movement;
     private float verticalVelocity;
-    
-    public int FacingDirection { get; private set; } = 1;
 
-
-    // External effects
     private float externalImpulse;
     private float slowMultiplier = 1f;
     private float slowTimer;
@@ -53,11 +59,10 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-        animator = GetComponent<Animator>();
-
-        fixedZ = transform.position.z;
-        
-        armor = GetComponent<PlayerArmor>();
+        animator            = GetComponent<Animator>();
+        fixedZ              = transform.position.z;
+        armor               = GetComponent<PlayerArmor>();
+        health = GetComponent<Health>();
     }
 
     private void OnEnable()
@@ -79,7 +84,7 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
 
     private void Update()
     {
-        float input = moveAction.action.ReadValue<float>();
+        float input       = moveAction.action.ReadValue<float>();
         float inputSprint = sprintAction.action.ReadValue<float>();
 
         HandleSlow();
@@ -98,24 +103,11 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
         pos.z = fixedZ;
         transform.position = pos;
     }
+
     // =========================
     // MOVEMENT
     // =========================
 
-    /*
-    private void HandleMovement(float input, float inputSprint)
-    {
-        float baseSpeed = moveSpeed * slowMultiplier;
-        float sprintSpeed = sprintMultiplier * inputSprint * slowMultiplier;
-
-        movement.x = input * (baseSpeed + sprintSpeed) + externalImpulse;
-        movement.y = verticalVelocity;
-        movement.z = 0;
-
-        characterController.Move(movement * Time.deltaTime);
-    }
-*/
-    
     private void HandleMovement(float input, float inputSprint)
     {
         float baseSpeed   = moveSpeed * slowMultiplier * armorSpeedMultiplier;
@@ -130,18 +122,15 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
 
         characterController.Move(movement * Time.deltaTime);
     }
-    
+
     private void HandleRotation(float input)
     {
-        if (Mathf.Abs(input) < 0.01f)
-            return;
+        if (Mathf.Abs(input) < 0.01f) return;
 
         FacingDirection = input > 0 ? 1 : -1;
-
         float yRotation = FacingDirection == 1 ? 90f : 270f;
         transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
     }
-
 
     // =========================
     // JUMP
@@ -185,47 +174,30 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
 
     private void HandleExternalImpulse()
     {
-        externalImpulse = Mathf.MoveTowards(
-            externalImpulse,
-            0f,
-            impulseDecay * Time.deltaTime
-        );
+        externalImpulse = Mathf.MoveTowards(externalImpulse, 0f, impulseDecay * Time.deltaTime);
     }
 
     private void HandleSlow()
     {
         if (slowTimer > 0f)
-        {
             slowTimer -= Time.deltaTime;
-        }
         else
-        {
-            slowMultiplier = Mathf.MoveTowards(
-                slowMultiplier,
-                1f,
-                slowRecoverySpeed * Time.deltaTime
-            );
-        }
+            slowMultiplier = Mathf.MoveTowards(slowMultiplier, 1f, slowRecoverySpeed * Time.deltaTime);
     }
 
     private void HandleStun()
     {
         if (!isStunned) return;
-
         stunTimer -= Time.deltaTime;
-        if (stunTimer <= 0f)
-            isStunned = false;
+        if (stunTimer <= 0f) isStunned = false;
     }
-    
+
     private void HandleBurn()
     {
-        if (burnTimer <= 0f)
-            return;
-
+        if (burnTimer <= 0f) return;
         burnTimer -= Time.deltaTime;
         ApplyDamage(burnDps * Time.deltaTime);
     }
-
 
     // =========================
     // IAbilityTarget
@@ -233,69 +205,48 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget
 
     public void ApplyImpulse(float force)
     {
-        // El impulso se reduce a la mitad con armadura activa
-        float finalForce = armor != null && armor.IsActive
-            ? force * 0.5f
-            : force;
-
+        float finalForce = armor != null && armor.IsActive ? force * 0.5f : force;
         externalImpulse += finalForce;
     }
 
     public void ApplySlow(float multiplier, float duration)
     {
-        // La armadura bloquea completamente el slow
         if (armor != null && armor.IsActive) return;
-
         slowMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
-        slowTimer      = duration;
+        slowTimer = duration;
     }
-    
+
     public void ApplyStun(float duration)
     {
-        // La armadura bloquea completamente el stun
         if (armor != null && armor.IsActive) return;
-
-        isStunned  = true;
-        stunTimer  = duration;
+        isStunned = true;
+        stunTimer = duration;
     }
 
     public void ApplyDamage(float damage)
     {
-        float finalDamage = armor != null && armor.IsActive
-            ? armor.AbsorbDamage(damage)
-            : damage;
-
-        health -= finalDamage;
+        float finalDamage = armor != null && armor.IsActive ? armor.AbsorbDamage(damage) : damage;
+        
+        health.TakeDamage(finalDamage);
         Debug.Log($"{name} HP: {health}");
     }
 
     public void ApplyBurn(float damagePerSecond, float duration)
     {
-        // La armadura bloquea completamente el burn
         if (armor != null && armor.IsActive) return;
-
         burnDps   = damagePerSecond;
         burnTimer = duration;
     }
-    
-    
-    
-    
-    
-    public void SetGravityEnabled(bool enabled)
-    {
-        gravityEnabled = enabled;
-    }
-    
 
+    // =========================
+    // EXTERNAL CONTROL
+    // =========================
+
+    public void SetGravityEnabled(bool enabled)            => gravityEnabled = enabled;
     public void SetHorizontalMovementEnabled(bool enabled)
     {
         horizontalMovementEnabled = enabled;
         if (enabled) movement.x = 0f;
     }
-    
-    public void SetArmorSpeedMultiplier(float multiplier)
-    {
-        armorSpeedMultiplier = multiplier;
-    }
+    public void SetArmorSpeedMultiplier(float multiplier)  => armorSpeedMultiplier = multiplier;
 }

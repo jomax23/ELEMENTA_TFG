@@ -14,19 +14,23 @@ public class TrampaVolcanicaAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
+        if (trapPrefab == null)
+        {
+            Debug.LogError($"[{nameof(TrampaVolcanicaAbility)}] trapPrefab no asignado.", this);
             return;
+        }
 
-        Vector3 spawnPos = owner.transform.position;
-        spawnPos.x += movement.FacingDirection * spawnOffsetX;
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
+        {
+            Debug.LogError($"[{nameof(TrampaVolcanicaAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
+            return;
+        }
 
-        Quaternion rotation = Quaternion.Euler(-90f, 0f, 0f);
-        
-        Instantiate(
-            trapPrefab,
-            spawnPos,
-            rotation
-        );
+        Vector3 spawnPos  = owner.transform.position;
+        spawnPos.x       += user.FacingDirection * spawnOffsetX;
+
+        TrampaVolcanicaArea trap = Instantiate(trapPrefab, spawnPos, Quaternion.Euler(-90f, 0f, 0f));
+        trap.Initialize(user.TargetLayers);
     }
 }

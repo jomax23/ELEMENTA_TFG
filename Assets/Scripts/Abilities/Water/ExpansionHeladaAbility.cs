@@ -13,26 +13,26 @@ public class ExpansionHeladaAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
+        if (areaPrefab == null)
+        {
+            Debug.LogError($"[{nameof(ExpansionHeladaAbility)}] areaPrefab no asignado.", this);
             return;
-        
-        Transform t = owner.transform;
+        }
 
-        Vector3 spawnPosition =
-            t.position +
-            t.forward * spawnDistance;
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
+        {
+            Debug.LogError($"[{nameof(ExpansionHeladaAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
+            return;
+        }
 
-        spawnPosition.y += spawnOffset; // suelo
-        
-        int directionX = movement.FacingDirection;
+        int directionX = user.FacingDirection;
 
-        ExpansionHeladaArea area = Instantiate(
-            areaPrefab,
-            spawnPosition,
-            Quaternion.identity
-        );
+        Vector3 spawnPos = owner.transform.position
+                           + Vector3.right * directionX * spawnDistance
+                           + Vector3.up    * spawnOffset;
 
-        area.Initialize(directionX);
+        ExpansionHeladaArea area = Instantiate(areaPrefab, spawnPos, Quaternion.identity);
+        area.Initialize(directionX, user.TargetLayers);
     }
 }

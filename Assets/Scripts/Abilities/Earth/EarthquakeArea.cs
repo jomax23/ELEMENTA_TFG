@@ -6,21 +6,24 @@ public class EarthquakeArea : MonoBehaviour
     [SerializeField] private float duration = 3f;
 
     [Header("Effects")]
-    [SerializeField] private float stunDuration = 1f;
+    [SerializeField] private float stunDuration    = 1f;
     [SerializeField] private float damagePerSecond = 5f;
 
-    [Header("Target Filtering")]
-    [SerializeField] private LayerMask targetLayers;
-
+    private LayerMask targetLayers;
     private float timer;
+    private bool  initialized;
 
-    private void Start()
+    public void Initialize(LayerMask layers)
     {
-        timer = duration;
+        targetLayers = layers;
+        initialized  = true;
+        timer        = duration;
     }
 
     private void Update()
     {
+        if (!initialized) return;
+
         timer -= Time.deltaTime;
         if (timer <= 0f)
             Destroy(gameObject);
@@ -28,17 +31,13 @@ public class EarthquakeArea : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if ((targetLayers.value & (1 << other.gameObject.layer)) == 0)
-            return;
+        if (!initialized) return;
+        if ((targetLayers.value & (1 << other.gameObject.layer)) == 0) return;
 
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
-        if (target == null)
-            return;
+        if (target == null) return;
 
-        // Stun continuo (refresca duración)
         target.ApplyStun(stunDuration);
-
-        // Daño en el tiempo
         target.ApplyDamage(damagePerSecond * Time.deltaTime);
     }
 }

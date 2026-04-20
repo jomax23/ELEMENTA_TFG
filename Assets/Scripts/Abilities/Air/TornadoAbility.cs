@@ -19,18 +19,18 @@ public class TornadoAbility : AbilityData
             return;
         }
 
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
         {
-            Debug.LogError($"[{nameof(TornadoAbility)}] PlayerMovement no encontrado en {owner.name}.", owner);
+            Debug.LogError($"[{nameof(TornadoAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
 
-        int directionX = movement.FacingDirection;
+        int directionX = user.FacingDirection;
 
         Vector3 spawnPos = owner.transform.position
-            + Vector3.right * directionX * spawnOffsetX
-            + Vector3.up    * spawnOffsetY;
+                           + Vector3.right * directionX * spawnOffsetX
+                           + Vector3.up    * spawnOffsetY;
 
         Instantiate(tornadoPrefab, spawnPos, Quaternion.Euler(-90f, 0f, 0f));
     }

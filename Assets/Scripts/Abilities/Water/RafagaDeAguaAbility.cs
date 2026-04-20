@@ -11,52 +11,47 @@ public class RafagaDeAguaAbility : AbilityData
     [SerializeField] private WaterBallProjectile projectilePrefab;
 
     [Header("Burst Settings")]
-    [SerializeField] private int projectileCount = 3;
-    [SerializeField] private float timeBetweenShots = 0.5f;
+    [SerializeField] private int   projectileCount    = 3;
+    [SerializeField] private float timeBetweenShots   = 0.5f;
 
     public override void Activate(GameObject owner)
     {
-        AbilityCoroutineRunner runner =
-            owner.GetComponent<AbilityCoroutineRunner>();
-
-        if (runner == null)
+        if (projectilePrefab == null)
         {
-            Debug.LogError("El jugador no tiene AbilityCoroutineRunner");
+            Debug.LogError($"[{nameof(RafagaDeAguaAbility)}] projectilePrefab no asignado.", this);
+            return;
+        }
+
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
+        {
+            Debug.LogError($"[{nameof(RafagaDeAguaAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
 
         Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
         if (spawnPoint == null)
         {
-            Debug.LogError("No existe ProjectileSpawnPoint en el Player");
+            Debug.LogError($"[{nameof(RafagaDeAguaAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);
             return;
         }
 
-        runner.RunCoroutine(
-            FireBurst(owner.transform, spawnPoint)
-        );
+        user.RunCoroutine(FireBurst(user, spawnPoint));
     }
 
-    private IEnumerator FireBurst(Transform ownerTransform, Transform spawnPoint)
+    private IEnumerator FireBurst(IAbilityUser user, Transform spawnPoint)
     {
-        PlayerMovement movement =
-            ownerTransform.GetComponent<PlayerMovement>();
-
-        if (movement == null)
-            yield break;
-
-        int directionX = movement.FacingDirection;
+        int       directionX = user.FacingDirection;
+        LayerMask layers     = user.TargetLayers;
 
         for (int i = 0; i < projectileCount; i++)
         {
-            SpawnProjectile(spawnPoint, directionX);
+            SpawnProjectile(spawnPoint, directionX, layers);
             yield return new WaitForSeconds(timeBetweenShots);
         }
     }
 
-
-
-    private void SpawnProjectile(Transform spawnPoint, float directionX)
+    private void SpawnProjectile(Transform spawnPoint, float directionX, LayerMask layers)
     {
         WaterBallProjectile proj = Instantiate(
             projectilePrefab,
@@ -64,6 +59,6 @@ public class RafagaDeAguaAbility : AbilityData
             Quaternion.identity
         );
 
-        proj.Initialize(directionX);
+        proj.Initialize(directionX, layers);
     }
 }

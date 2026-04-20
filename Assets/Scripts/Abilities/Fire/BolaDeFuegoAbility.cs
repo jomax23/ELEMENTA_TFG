@@ -12,54 +12,35 @@ public class BolaDeFuegoAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        AbilityCoroutineRunner runner =
-            owner.GetComponent<AbilityCoroutineRunner>();
-
-        if (runner == null)
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
         {
-            Debug.LogError("El jugador no tiene AbilityCoroutineRunner");
+            Debug.LogError($"[{nameof(BolaDeFuegoAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
 
         Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
         if (spawnPoint == null)
         {
-            Debug.LogError("No existe ProjectileSpawnPoint en el Player");
+            Debug.LogError($"[{nameof(BolaDeFuegoAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);
             return;
         }
 
-        runner.RunCoroutine(
-            FireOnce(owner.transform, spawnPoint)
-        );
+        user.RunCoroutine(FireOnce(user, spawnPoint));
     }
 
-    private IEnumerator FireOnce(Transform ownerTransform, Transform spawnPoint)
+    private IEnumerator FireOnce(IAbilityUser user, Transform spawnPoint)
     {
-        PlayerMovement movement =
-            ownerTransform.GetComponent<PlayerMovement>();
-
-        if (movement == null)
-            yield break;
-
-        int directionX = movement.FacingDirection;
-
-        SpawnProjectile(spawnPoint, directionX);
-
-        yield return null; // mantiene el patrón de coroutine
+        int directionX = user.FacingDirection;
+        SpawnProjectile(spawnPoint, directionX, user.TargetLayers);
+        yield return null;
     }
 
-    private void SpawnProjectile(Transform spawnPoint, int directionX)
+    private void SpawnProjectile(Transform spawnPoint, int directionX, LayerMask layers)
     {
-        
         Quaternion rotation = Quaternion.Euler(0f, 0f, 90 * directionX);
 
-        FireballProjectile fireball = Instantiate(
-            fireballPrefab,
-            spawnPoint.position,
-            rotation
-        );
-
-        fireball.Initialize(directionX);
+        FireballProjectile fireball = Instantiate(fireballPrefab, spawnPoint.position, rotation);
+        fireball.Initialize(directionX, layers);
     }
-
 }

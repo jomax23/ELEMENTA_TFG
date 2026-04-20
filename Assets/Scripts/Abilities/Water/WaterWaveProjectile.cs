@@ -3,23 +3,22 @@ using UnityEngine;
 public class WaterWaveProjectile : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float speed = 10f;
+    [SerializeField] private float speed    = 10f;
     [SerializeField] private float lifetime = 2f;
 
     [Header("Effects")]
-    [SerializeField] private float pushForce = 12f;
+    [SerializeField] private float pushForce      = 12f;
     [SerializeField] private float slowMultiplier = 0.5f;
-    [SerializeField] private float slowDuration = 2f;
-    [SerializeField] private float damage = 10f;
+    [SerializeField] private float slowDuration   = 2f;
+    [SerializeField] private float damage         = 10f;
 
-    [Header("Target Filtering")]
-    [SerializeField] private LayerMask targetLayers;
+    private LayerMask targetLayers;
+    private int directionX;
 
-    private int directionX; // +1 o -1
-
-    public void Initialize(int dirX)
+    public void Initialize(int dirX, LayerMask layers)
     {
-        directionX = dirX;
+        directionX   = dirX;
+        targetLayers = layers;
         Destroy(gameObject, lifetime);
     }
 
@@ -40,7 +39,5 @@ public class WaterWaveProjectile : MonoBehaviour
             target.ApplySlow(slowMultiplier, slowDuration);
             target.ApplyDamage(damage);
         }
-
-        //Destroy(gameObject);
     }
 }

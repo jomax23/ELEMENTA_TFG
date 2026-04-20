@@ -11,28 +11,17 @@ public class BoomAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
         {
-            Debug.LogError("El Player no tiene PlayerMovement");
+            Debug.LogError($"[{nameof(BoomAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
             return;
         }
 
-        int directionX = movement.FacingDirection;
+        Vector3 spawnPosition   = owner.transform.position;
+        spawnPosition.y         = 1f;
 
-        
-        Transform t = owner.transform;
-
-        Vector3 spawnPosition = owner.transform.position;
-
-        spawnPosition.y = 1;
-        
-        ExplosionArea explosion = Instantiate(
-            explosionPrefab,
-            spawnPosition,
-            Quaternion.identity
-        );
-
-        explosion.Initialize(directionX);
+        ExplosionArea explosion = Instantiate(explosionPrefab, spawnPosition, Quaternion.identity);
+        explosion.Initialize(user.FacingDirection, user.TargetLayers);
     }
 }

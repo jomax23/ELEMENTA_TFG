@@ -3,21 +3,20 @@ using UnityEngine;
 public class WaterBallProjectile : MonoBehaviour, IReversible
 {
     [Header("Movement")]
-    [SerializeField] private float speed = 12f;
+    [SerializeField] private float speed    = 12f;
     [SerializeField] private float lifetime = 2f;
 
     [Header("Effects")]
     [SerializeField] private float pushForce = 6f;
-    [SerializeField] private float damage = 10f;
+    [SerializeField] private float damage    = 10f;
 
-    [Header("Target Filtering")]
-    [SerializeField] private LayerMask targetLayers;
+    private LayerMask targetLayers;
+    private float directionX;
 
-    private float directionX; // +1 o -1
-
-    public void Initialize(float dirX)
+    public void Initialize(float dirX, LayerMask layers)
     {
-        directionX = Mathf.Sign(dirX);
+        directionX   = Mathf.Sign(dirX);
+        targetLayers = layers;
         Destroy(gameObject, lifetime);
     }
 
@@ -40,7 +39,7 @@ public class WaterBallProjectile : MonoBehaviour, IReversible
 
         Destroy(gameObject);
     }
-    
+
     public void ReverseDirection()
     {
         directionX = Mathf.Sign(directionX) * -1f;

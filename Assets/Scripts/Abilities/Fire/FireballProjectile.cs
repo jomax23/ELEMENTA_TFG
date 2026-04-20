@@ -11,28 +11,23 @@ public class FireballProjectile : MonoBehaviour, IReversible
     [SerializeField] private float burnDamagePerSecond = 2f;
     [SerializeField] private float burnDuration = 3f;
 
-    [Header("Target Filtering")]
-    [SerializeField] private LayerMask targetLayers;
-
+    private LayerMask targetLayers;
     private int directionX;
     private float lifeTimer;
 
-    public void Initialize(int dirX)
+    public void Initialize(int dirX, LayerMask layers)
     {
-        directionX = dirX;
+        directionX   = dirX;
+        targetLayers = layers;
     }
 
     private void Update()
     {
-        // Movimiento
         transform.position += Vector3.right * directionX * speed * Time.deltaTime;
 
-        // Temporizador de vida
         lifeTimer += Time.deltaTime;
         if (lifeTimer >= lifetime)
-        {
             Destroy(gameObject);
-        }
     }
 
     private void OnTriggerEnter(Collider other)

@@ -26,6 +26,25 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
     private float slowMultiplier = 1f;
     private float slowTimer;
 
+    // ── AI CONTROL ──────────────────────────────────
+    // Set each frame by EnemyAI via SetMoveVelocity().
+    // Kept separate from externalImpulse so that
+    // knock-back and intentional movement don't interfere.
+    private float aiVelocity;
+
+    /// <summary>Exposes stun state so EnemyAI can sync its own state machine.</summary>
+    public bool IsStunned => isStunned;
+
+    /// <summary>
+    /// Called by EnemyAI every Update to inject the desired movement velocity.
+    /// SlowMultiplier is applied here so status effects still affect AI movement.
+    /// </summary>
+    public void SetMoveVelocity(float velocity)
+    {
+        aiVelocity = velocity * slowMultiplier;
+    }
+    // ────────────────────────────────────────────────
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
@@ -48,7 +67,8 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
 
     private void HandleMovement()
     {
-        movement.x = externalImpulse;
+        // If stunned, kill all intentional movement (impulses still apply)
+        movement.x = isStunned ? externalImpulse : aiVelocity + externalImpulse;
         movement.y = verticalVelocity;
 
         characterController.Move(movement * Time.deltaTime);
@@ -133,6 +153,7 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
     {
         isStunned = true;
         stunTimer = duration;
+        // EnemyAI.SyncStunState() will pick this up automatically next frame
     }
 
     public void ApplyDamage(float damage)
@@ -146,5 +167,4 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
         burnDps = damagePerSecond;
         burnTimer = duration;
     }
-
 }

@@ -12,26 +12,24 @@ public class GolpeDeMareaAbility : AbilityData
 
     public override void Activate(GameObject owner)
     {
-        PlayerMovement movement = owner.GetComponent<PlayerMovement>();
-        if (movement == null)
+        if (wavePrefab == null)
         {
-            Debug.LogError("El Player no tiene PlayerMovement");
+            Debug.LogError($"[{nameof(GolpeDeMareaAbility)}] wavePrefab no asignado.", this);
             return;
         }
 
-        int directionX = movement.FacingDirection;
+        IAbilityUser user = owner.GetComponent<IAbilityUser>();
+        if (user == null)
+        {
+            Debug.LogError($"[{nameof(GolpeDeMareaAbility)}] IAbilityUser no encontrado en {owner.name}.", owner);
+            return;
+        }
 
-        Vector3 spawnPosition =
-            owner.transform.position +
-            Vector3.right * directionX * spawnOffset;
-
+        int directionX = user.FacingDirection;
+        Vector3 spawnPos = owner.transform.position + Vector3.right * directionX * spawnOffset;
         Quaternion rotation = Quaternion.Euler(0f, 90 * directionX, 0f);
-        WaterWaveProjectile wave = Instantiate(
-            wavePrefab,
-            spawnPosition,
-            rotation
-        );
 
-        wave.Initialize(directionX);
+        WaterWaveProjectile wave = Instantiate(wavePrefab, spawnPos, rotation);
+        wave.Initialize(directionX, user.TargetLayers);
     }
 }
