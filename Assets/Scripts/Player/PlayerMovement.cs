@@ -9,19 +9,19 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float moveSpeed       = 6f;
     [SerializeField] private float sprintMultiplier = 100f;
-    [SerializeField] private float jumpForce = 8f;
-    [SerializeField] private float gravity = -20f;
-    private bool gravityEnabled = true;
+    [SerializeField] private float jumpForce       = 8f;
+    [SerializeField] private float gravity         = -20f;
+    private bool gravityEnabled            = true;
     private bool horizontalMovementEnabled = true;
     private float fixedZ;
     public bool IsGrounded => characterController.isGrounded;
 
     [Header("External Effects")]
-    [SerializeField] private float impulseDecay = 30f;
+    [SerializeField] private float impulseDecay      = 30f;
     [SerializeField] private float slowRecoverySpeed = 2f;
-    private bool isStunned;
+    private bool  isStunned;
     private float stunTimer;
     private float burnTimer;
     private float burnDps;
@@ -46,18 +46,13 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     public void RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Disparado cuando se aplica un stun al player.
-    /// PlayerAbilities se suscribe para cancelar la habilidad en curso.
-    /// </summary>
     public event Action OnStunApplied;
-
-    /// <summary>True mientras se reproduce una animación de habilidad.</summary>
     public bool IsUsingAbility { get; private set; }
 
     private CharacterController characterController;
     private Animator             animator;
     private Health               health;
+    private PlayerAudioController audioController;   // ← NUEVO
 
     private Vector3 movement;
     private float   verticalVelocity;
@@ -65,13 +60,11 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     private float   slowMultiplier = 1f;
     private float   slowTimer;
 
-    // ── Animator hashes ───────────────────────────────────────────────────────
     private static readonly int AnimIsMoving    = Animator.StringToHash("IsMoving");
     private static readonly int AnimIsSprinting = Animator.StringToHash("IsSprinting");
     private static readonly int AnimIsGrounded  = Animator.StringToHash("IsGrounded");
     private static readonly int AnimPunch       = Animator.StringToHash("Punch");
     private static readonly int AnimIsStunned   = Animator.StringToHash("IsStunned");
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -80,6 +73,7 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         health              = GetComponent<Health>();
         fixedZ              = transform.position.z;
         armor               = GetComponent<PlayerArmor>();
+        audioController     = GetComponent<PlayerAudioController>();   // ← NUEVO
     }
 
     private void OnEnable()
@@ -128,7 +122,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 
     private void HandleMovement(float input, float inputSprint)
     {
-        // Sin movimiento horizontal durante una habilidad o stun
         bool canMove = horizontalMovementEnabled && !IsUsingAbility && !isStunned;
 
         float baseSpeed   = moveSpeed * slowMultiplier * armorSpeedMultiplier;
@@ -146,11 +139,10 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 
     private void HandleRotation(float input)
     {
-        // No girar durante habilidad o stun
         if (IsUsingAbility || isStunned) return;
         if (Mathf.Abs(input) < 0.01f) return;
 
-        FacingDirection = input > 0 ? 1 : -1;
+        FacingDirection    = input > 0 ? 1 : -1;
         transform.rotation = Quaternion.Euler(0f, FacingDirection == 1 ? 90f : 270f, 0f);
     }
 
@@ -165,9 +157,11 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
             if (verticalVelocity < 0f)
                 verticalVelocity = -2f;
 
-            // Salto bloqueado durante habilidad o stun
             if (!IsUsingAbility && !isStunned && jumpAction.action.WasPressedThisFrame())
+            {
                 verticalVelocity = jumpForce;
+                audioController?.PlayJump();   // ← SFX de salto
+            }
         }
         else
         {
@@ -181,11 +175,12 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 
     private void HandlePunch()
     {
-        // Puñetazo bloqueado durante habilidad o stun
         if (IsUsingAbility || isStunned) return;
 
         if (punchAction.action.WasPressedThisFrame())
             animator.SetTrigger(AnimPunch);
+            // Nota: el SFX del puñetazo se dispara desde Animation Event (OnPunch)
+            // en el frame de impacto del clip, no aquí.
     }
 
     // =========================
@@ -200,10 +195,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         animator.CrossFade(stateName, abilityAnimationCrossFade);
     }
 
-    /// <summary>
-    /// Cancela el estado de habilidad activa y devuelve el control al jugador.
-    /// Llamado por PlayerAbilities al recibir un stun o al finalizar la animación.
-    /// </summary>
     public void CancelAbilityAnimation()
     {
         IsUsingAbility = false;
@@ -211,10 +202,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 
     private void UpdateAnimator(float input, float inputSprint)
     {
-        // Stun tiene máxima prioridad visual
         animator.SetBool(AnimIsStunned, isStunned);
 
-        // Durante habilidad o stun, la locomoción no sobreescribe
         if (IsUsingAbility || isStunned) return;
 
         bool isMoving    = Mathf.Abs(input) > 0.01f && horizontalMovementEnabled;
@@ -279,7 +268,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         isStunned = true;
         stunTimer = duration;
 
-        // Notifica a PlayerAbilities para que cancele la habilidad en curso
         OnStunApplied?.Invoke();
     }
 
@@ -303,8 +291,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     // EXTERNAL CONTROL
     // =========================
 
-    public void SetGravityEnabled(bool enabled)           => gravityEnabled = enabled;
-    public void SetArmorSpeedMultiplier(float multiplier) => armorSpeedMultiplier = multiplier;
+    public void SetGravityEnabled(bool enabled)            => gravityEnabled = enabled;
+    public void SetArmorSpeedMultiplier(float multiplier)  => armorSpeedMultiplier = multiplier;
 
     public void SetHorizontalMovementEnabled(bool enabled)
     {

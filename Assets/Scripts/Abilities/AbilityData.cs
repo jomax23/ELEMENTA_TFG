@@ -46,6 +46,11 @@ public abstract class AbilityData : ScriptableObject
     [Min(0f)]
     public float totalAnimationDuration = 1f;
 
+    [Header("Audio")]
+    [Tooltip("Sonido que se reproduce en el momento exacto de activación " +
+             "(cuando el efecto ocurre, es decir, tras el activationDelay).")]
+    [SerializeField] private SoundData activationSound;
+
     // ─────────────────────────────────────────────────────────────────────────
     // LIFECYCLE
     // ─────────────────────────────────────────────────────────────────────────
@@ -55,6 +60,18 @@ public abstract class AbilityData : ScriptableObject
     /// Llamado automáticamente por PlayerAbilities en el frame de impacto (tras activationDelay).
     /// </summary>
     public abstract void Activate(GameObject owner);
+
+    /// <summary>
+    /// Reproduce el SFX y llama a Activate().
+    /// PlayerAbilities usa este método en lugar de Activate() directamente.
+    /// </summary>
+    public void ActivateWithAudio(GameObject owner)
+    {
+        if (activationSound != null)
+            AudioManager.Instance?.PlaySFX(activationSound);
+
+        Activate(owner);
+    }
 
     /// <summary>
     /// Cancela todos los efectos en curso de esta habilidad.

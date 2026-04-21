@@ -211,8 +211,8 @@ public class PlayerAbilities : MonoBehaviour
         if (ability.activationDelay > 0f)
             yield return new WaitForSeconds(ability.activationDelay);
 
-        // ── Fase 2: efecto ocurre ─────────────────────────────────────────────
-        ability.Activate(gameObject);
+        // ── Fase 2: efecto ocurre + SFX de activación ────────────────────────
+        ability.ActivateWithAudio(gameObject);
 
         // ── Fase 3: esperar el resto de la animación ──────────────────────────
         float lockRemaining = ability.totalAnimationDuration - ability.activationDelay;
