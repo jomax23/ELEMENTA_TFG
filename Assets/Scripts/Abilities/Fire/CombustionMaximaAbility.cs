@@ -18,6 +18,14 @@ public class CombustionMaximaAbility : AbilityData
     [Header("Collision")]
     [SerializeField] private LayerMask obstacleLayers;
 
+    // ── Estado runtime ─────────────────────────────────────────────────────────
+    // ScriptableObject compartido: solo un jugador lo usa a la vez en un juego 1v1,
+    // por lo que guardar estado de instancia aquí es seguro.
+    private bool       isCancelled;
+    private GameObject activeBeam;
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     public override void Activate(GameObject owner)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
@@ -34,25 +42,54 @@ public class CombustionMaximaAbility : AbilityData
             return;
         }
 
+        // Reset de la bandera antes de cada uso.
+        isCancelled = false;
+        activeBeam  = null;
+
         user.RunCoroutine(Execute(user, spawnPoint));
     }
+
+    /// <summary>
+    /// Cancela el haz activo y marca la coroutine interna para que aborte.
+    /// Llamado por PlayerAbilities cuando el jugador es interrumpido.
+    /// </summary>
+    public override void Cancel(GameObject owner)
+    {
+        isCancelled = true;
+
+        if (activeBeam != null)
+        {
+            Object.Destroy(activeBeam);
+            activeBeam = null;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     private IEnumerator Execute(IAbilityUser user, Transform spawnPoint)
     {
         int     directionX = user.FacingDirection;
         Vector3 dir        = Vector3.right * directionX;
 
-        // ── Mostrar haz de aire ──────────────────────────────────────────────
-        GameObject beamObj = Instantiate(airBeamPrefab, Vector3.zero, Quaternion.identity);
+        // ── Fase 1: mostrar haz de aire ───────────────────────────────────────
+        activeBeam = Instantiate(airBeamPrefab, Vector3.zero, Quaternion.identity);
 
-        CombustionBeam beam = beamObj.GetComponent<CombustionBeam>();
+        CombustionBeam beam = activeBeam.GetComponent<CombustionBeam>();
         beam.Initialize(spawnPoint, dir, maxDistance, obstacleLayers, airBeamDuration);
 
         yield return new WaitForSeconds(airBeamDuration);
 
-        Destroy(beamObj);
+        // Si fuimos interrumpidos durante la espera, Cancel() ya destruyó el haz.
+        // Abortamos aquí para no disparar el proyectil.
+        if (isCancelled) yield break;
 
-        // ── Crear bola de fuego con la capa correcta ─────────────────────────
+        // ── Fase 2: destruir haz y disparar fireball ──────────────────────────
+        if (activeBeam != null)
+        {
+            Object.Destroy(activeBeam);
+            activeBeam = null;
+        }
+
         FireballProjectile fireball = Instantiate(
             fireballPrefab,
             spawnPoint.position,

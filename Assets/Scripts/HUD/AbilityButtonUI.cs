@@ -12,7 +12,7 @@ public class AbilityButtonUI : MonoBehaviour
 
     private void Awake()
     {
-        controller = FindObjectOfType<AbilitiesMenuController>();
+        controller = FindFirstObjectByType<AbilitiesMenuController>();
     }
 
     public void SetAbility(AbilityData data)

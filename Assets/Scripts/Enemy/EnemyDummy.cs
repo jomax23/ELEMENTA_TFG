@@ -2,6 +2,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Health))]
+[RequireComponent(typeof(Animator))]
 public class EnemyDummy : MonoBehaviour, IAbilityTarget
 {
     [Header("Movement")]
@@ -11,44 +12,41 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
     [SerializeField] private float impulseDecay = 30f;
     [SerializeField] private float slowRecoverySpeed = 2f;
     [SerializeField] private bool isStunned;
+
     private float stunTimer;
     private float burnTimer;
     private float burnDps;
-    
+
     private Health health;
     private CharacterController characterController;
+    private Animator animator;
 
     private Vector3 movement;
     private float verticalVelocity;
 
-    // Effects
     private float externalImpulse;
     private float slowMultiplier = 1f;
     private float slowTimer;
 
-    // ── AI CONTROL ──────────────────────────────────
-    // Set each frame by EnemyAI via SetMoveVelocity().
-    // Kept separate from externalImpulse so that
-    // knock-back and intentional movement don't interfere.
     private float aiVelocity;
 
-    /// <summary>Exposes stun state so EnemyAI can sync its own state machine.</summary>
     public bool IsStunned => isStunned;
 
-    /// <summary>
-    /// Called by EnemyAI every Update to inject the desired movement velocity.
-    /// SlowMultiplier is applied here so status effects still affect AI movement.
-    /// </summary>
-    public void SetMoveVelocity(float velocity)
-    {
-        aiVelocity = velocity * slowMultiplier;
-    }
-    // ────────────────────────────────────────────────
+    // ───────── Animator hashes ─────────
+    private static readonly int AnimIsMoving    = Animator.StringToHash("IsMoving");
+    private static readonly int AnimIsGrounded  = Animator.StringToHash("IsGrounded");
+    private static readonly int AnimPunch       = Animator.StringToHash("Punch");
+    private static readonly int AnimAbility     = Animator.StringToHash("Ability");
+    private static readonly int AnimIsStunned   = Animator.StringToHash("IsStunned");
+    private static readonly int AnimSpeed       = Animator.StringToHash("Speed");
+    private static readonly int AnimIsSprinting = Animator.StringToHash("IsSprinting");
+    // ───────────────────────────────────
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         health = GetComponent<Health>();
+        animator = GetComponent<Animator>();
     }
 
     private void Update()
@@ -59,15 +57,20 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
         HandleBurn();
         HandleExternalImpulse();
         HandleMovement();
+        UpdateAnimator();
     }
 
     // =========================
     // MOVEMENT
     // =========================
 
+    public void SetMoveVelocity(float velocity)
+    {
+        aiVelocity = velocity * slowMultiplier;
+    }
+
     private void HandleMovement()
     {
-        // If stunned, kill all intentional movement (impulses still apply)
         movement.x = isStunned ? externalImpulse : aiVelocity + externalImpulse;
         movement.y = verticalVelocity;
 
@@ -88,34 +91,51 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
     }
 
     // =========================
+    // ANIMATIONS
+    // =========================
+
+    private void UpdateAnimator()
+    {
+        float speed = Mathf.Abs(aiVelocity);
+
+        bool isMoving = speed > 0.1f && !isStunned;
+        bool isGrounded = characterController.isGrounded;
+        bool isSprinting = speed > 4f; // 🔥 umbral de sprint
+
+        animator.SetBool(AnimIsMoving, isMoving);
+        animator.SetBool(AnimIsGrounded, isGrounded);
+        animator.SetBool(AnimIsStunned, isStunned);
+        animator.SetBool(AnimIsSprinting, isSprinting);
+        animator.SetFloat(AnimSpeed, speed);
+    }
+
+    public void PlayAttack()
+    {
+        animator.SetTrigger(AnimPunch);
+    }
+
+    public void PlayAbility()
+    {
+        animator.SetTrigger(AnimAbility);
+    }
+
+    // =========================
     // EFFECTS
     // =========================
 
     private void HandleExternalImpulse()
     {
-        externalImpulse = Mathf.MoveTowards(
-            externalImpulse,
-            0f,
-            impulseDecay * Time.deltaTime
-        );
+        externalImpulse = Mathf.MoveTowards(externalImpulse, 0f, impulseDecay * Time.deltaTime);
     }
 
     private void HandleSlow()
     {
         if (slowTimer > 0f)
-        {
             slowTimer -= Time.deltaTime;
-        }
         else
-        {
-            slowMultiplier = Mathf.MoveTowards(
-                slowMultiplier,
-                1f,
-                slowRecoverySpeed * Time.deltaTime
-            );
-        }
+            slowMultiplier = Mathf.MoveTowards(slowMultiplier, 1f, slowRecoverySpeed * Time.deltaTime);
     }
-    
+
     private void HandleStun()
     {
         if (!isStunned) return;
@@ -127,8 +147,7 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
 
     private void HandleBurn()
     {
-        if (burnTimer <= 0f)
-            return;
+        if (burnTimer <= 0f) return;
 
         burnTimer -= Time.deltaTime;
         ApplyDamage(burnDps * Time.deltaTime);
@@ -148,20 +167,18 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget
         slowMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
         slowTimer = duration;
     }
-    
+
     public void ApplyStun(float duration)
     {
         isStunned = true;
         stunTimer = duration;
-        // EnemyAI.SyncStunState() will pick this up automatically next frame
     }
 
     public void ApplyDamage(float damage)
     {
         health.TakeDamage(damage);
-        Debug.Log($"{name} HP: {health}");
     }
-    
+
     public void ApplyBurn(float damagePerSecond, float duration)
     {
         burnDps = damagePerSecond;

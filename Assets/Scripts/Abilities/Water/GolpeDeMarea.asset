@@ -17,9 +17,12 @@ MonoBehaviour:
     segundos.
   element: 2
   icon: {fileID: 21300000, guid: 9b854db0776b62b45ba1a118482d6059, type: 3}
-  cooldown: 1
+  cooldown: 5
   minRange: 2.3
   maxRange: 20
   aiPriority: 1
+  animationStateName: Water1
+  activationDelay: 1.5
+  totalAnimationDuration: 4.2
   wavePrefab: {fileID: -8540998114614274175, guid: 11e47b6a0efd59646b77b203c3a87999, type: 3}
   spawnOffset: 0

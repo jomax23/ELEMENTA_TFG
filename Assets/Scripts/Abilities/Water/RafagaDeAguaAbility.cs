@@ -11,8 +11,13 @@ public class RafagaDeAguaAbility : AbilityData
     [SerializeField] private WaterBallProjectile projectilePrefab;
 
     [Header("Burst Settings")]
-    [SerializeField] private int   projectileCount    = 3;
-    [SerializeField] private float timeBetweenShots   = 0.5f;
+    [SerializeField] private int   projectileCount  = 3;
+    [SerializeField] private float timeBetweenShots = 0.5f;
+
+    // ── Estado runtime ─────────────────────────────────────────────────────────
+    private bool isCancelled;
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     public override void Activate(GameObject owner)
     {
@@ -36,8 +41,20 @@ public class RafagaDeAguaAbility : AbilityData
             return;
         }
 
+        isCancelled = false;
         user.RunCoroutine(FireBurst(user, spawnPoint));
     }
+
+    /// <summary>
+    /// Aborta el burst en curso. Los proyectiles ya instanciados siguen su trayectoria
+    /// (son auto-contenidos), pero no se dispararán más del burst.
+    /// </summary>
+    public override void Cancel(GameObject owner)
+    {
+        isCancelled = true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     private IEnumerator FireBurst(IAbilityUser user, Transform spawnPoint)
     {
@@ -46,8 +63,14 @@ public class RafagaDeAguaAbility : AbilityData
 
         for (int i = 0; i < projectileCount; i++)
         {
+            // Comprobar antes de cada disparo del burst.
+            if (isCancelled) yield break;
+
             SpawnProjectile(spawnPoint, directionX, layers);
-            yield return new WaitForSeconds(timeBetweenShots);
+
+            // No esperar después del último disparo (optimización menor).
+            if (i < projectileCount - 1)
+                yield return new WaitForSeconds(timeBetweenShots);
         }
     }
 

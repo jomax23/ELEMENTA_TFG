@@ -16,10 +16,13 @@ MonoBehaviour:
   description: "Ataque de pinchos de hielo que causa da\xF1o al minimo contacto."
   element: 2
   icon: {fileID: 21300000, guid: 1845f93104750584bb9a53aa5e060941, type: 3}
-  cooldown: 1
+  cooldown: 7
   minRange: 2.3
   maxRange: 20
   aiPriority: 0.6
+  animationStateName: Water3
+  activationDelay: 1.8
+  totalAnimationDuration: 4.2
   areaPrefab: {fileID: 1881512162759972329, guid: b23a29e190539fe428c9a4eee1b644ff, type: 3}
   spawnDistance: 0
   spawnOffset: 0

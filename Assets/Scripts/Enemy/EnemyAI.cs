@@ -4,17 +4,9 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Fighting-game style enemy AI.
-/// Uses the same ElementAbilitySet[] structure as the player — just assign the sets
-/// in the Inspector and the AI handles range + cooldowns automatically,
-/// reading minRange / maxRange / aiPriority from each AbilityData.
-///
-/// Implements IAbilityUser so abilities can call owner.GetComponent&lt;IAbilityUser&gt;()
-/// and get FacingDirection + TargetLayers + RunCoroutine regardless of whether the
-/// caster is the player or the enemy.
-///
-/// Architecture:
-///   EnemyDummy  → CharacterController, physics, IAbilityTarget effects.
-///   EnemyAI     → brain; drives EnemyDummy via SetMoveVelocity().
+/// Implementa el mismo patrón de cancelación que PlayerAbilities:
+/// cuando EnemyDummy entra en stun, se cancela la habilidad activa antes de
+/// StopAllCoroutines() para que los efectos en curso se limpien correctamente.
 /// </summary>
 [RequireComponent(typeof(EnemyDummy))]
 public class EnemyAI : MonoBehaviour, IAbilityUser
@@ -41,76 +33,61 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
     [SerializeField] private Transform playerTransform;
 
     [Header("Element & Abilities")]
-    [SerializeField] private ElementType currentElement;
+    [SerializeField] private ElementType       currentElement;
     [SerializeField] private ElementAbilitySet[] elementAbilitySets;
 
     [Header("Movement")]
     [SerializeField] private float approachSpeed  = 3.5f;
     [SerializeField] private float backOffSpeed   = 2.5f;
+    [SerializeField] private float sprintSpeed    = 6.5f;
+    [SerializeField] private float sprintDistance = 6f;
 
     [Header("Distance Thresholds")]
-    [Tooltip("AI activates once the player enters this range.")]
     [SerializeField] private float detectionRange    = 15f;
-    [Tooltip("Distance at which the enemy switches to melee mode.")]
     [SerializeField] private float meleeRange        = 1.8f;
-    [Tooltip("Ideal fighting distance — AI stops advancing here.")]
     [SerializeField] private float preferredDistance = 1.3f;
-    [Tooltip("If closer than this the AI backs off to avoid clipping.")]
     [SerializeField] private float minimumDistance   = 0.7f;
 
     [Header("Melee Attack")]
     [SerializeField] private float meleeDamage         = 10f;
     [SerializeField] private float meleeKnockback      = 5f;
     [SerializeField] private float meleeAttackCooldown = 0.75f;
-    [Tooltip("Actual hit-detection reach (can exceed meleeRange slightly).")]
     [SerializeField] private float meleeHitboxRange    = 2f;
 
     [Header("AI Behaviour")]
     [Range(0f, 1f)]
-    [Tooltip("0 = passive, 1 = relentlessly aggressive.")]
-    [SerializeField] private float aggressionLevel   = 0.7f;
+    [SerializeField] private float aggressionLevel     = 0.7f;
     [Range(0f, 1f)]
-    [Tooltip("Probability of attempting an ability when one is valid.")]
-    [SerializeField] private float abilityUsageRate  = 0.55f;
-    [Tooltip("Decision is re-evaluated every [min, max] seconds — adds human-like hesitation.")]
+    [SerializeField] private float abilityUsageRate    = 0.55f;
     [SerializeField] private float minDecisionInterval = 0.15f;
     [SerializeField] private float maxDecisionInterval = 0.45f;
     [Range(0f, 1f)]
-    [Tooltip("AI may retreat when HP drops below this fraction.")]
     [SerializeField] private float retreatHealthThreshold = 0.25f;
 
     [Header("Combat")]
-    [Tooltip("Capa(s) que deben recibir daño cuando el enemigo lanza una habilidad. " +
-             "Normalmente la capa 'Player'.")]
     [SerializeField] private LayerMask targetLayers;
 
     // ─────────────────────────────────────────────
     // RUNTIME
     // ─────────────────────────────────────────────
 
-    private AIState currentState        = AIState.Idle;
+    private AIState currentState    = AIState.Idle;
     private float   stateTimer;
     private float   decisionTimer;
     private float   meleeTimer;
     private float   currentMoveVelocity;
 
     // ── IAbilityUser ──────────────────────────────────────────────────────────
-    /// <summary>+1 = right, -1 = left. Updated by FaceDirection().</summary>
     public int       FacingDirection { get; private set; } = -1;
-
-    /// <summary>
-    /// Capa del jugador: todas las habilidades lanzadas por el enemigo
-    /// afectarán esta capa automáticamente.
-    /// </summary>
-    public LayerMask TargetLayers => targetLayers;
-
-    /// <summary>Runs ability coroutines on this MonoBehaviour's context.</summary>
+    public LayerMask TargetLayers    => targetLayers;
     public void RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
     // ─────────────────────────────────────────────────────────────────────────
 
     private AbilityData slot1, slot2, slot3, slot4;
-
     private Dictionary<AbilityData, float> cooldownTimers = new();
+
+    /// <summary>Habilidad que está ejecutándose ahora. Necesaria para Cancel() en stun.</summary>
+    private AbilityData activeAbility;
 
     private EnemyDummy enemyBody;
     private Health     health;
@@ -126,7 +103,7 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
 
         if (playerTransform == null)
         {
-            var player = FindObjectOfType<PlayerMovement>();
+            var player = FindFirstObjectByType<PlayerMovement>();
             if (player != null)
                 playerTransform = player.transform;
             else
@@ -266,6 +243,8 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
         float dist = DistanceToPlayer();
         int   dir  = DirectionToPlayer();
 
+        float moveSpeed = dist > sprintDistance ? sprintSpeed : approachSpeed;
+
         switch (currentState)
         {
             case AIState.Idle:
@@ -280,7 +259,7 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
                 }
                 else
                 {
-                    currentMoveVelocity = dir * approachSpeed;
+                    currentMoveVelocity = dir * moveSpeed;
                     FaceDirection(dir);
                 }
                 break;
@@ -288,6 +267,7 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
             case AIState.BackingOff:
                 currentMoveVelocity = -dir * backOffSpeed;
                 FaceDirection(dir);
+
                 if (stateTimer <= 0f)
                     TransitionTo(AIState.Approaching);
                 break;
@@ -343,10 +323,9 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
         var target = playerTransform.GetComponent<IAbilityTarget>();
         if (target == null) return;
 
+        enemyBody.PlayAttack();
         target.ApplyDamage(meleeDamage);
         target.ApplyImpulse(dir * meleeKnockback);
-
-        Debug.Log($"[EnemyAI] Melee hit → {meleeDamage} dmg");
     }
 
     // ─────────────────────────────────────────────
@@ -382,14 +361,19 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
         currentState        = AIState.UsingAbility;
         currentMoveVelocity = 0f;
 
-        yield return new WaitForSeconds(Random.Range(0.10f, 0.20f));
+        yield return new WaitForSeconds(Random.Range(0.1f, 0.2f));
 
+        enemyBody.PlayAbility();
+
+        // Registrar habilidad activa antes de activarla.
+        activeAbility = ability;
         ability.Activate(gameObject);
         cooldownTimers[ability] = ability.cooldown;
 
-        Debug.Log($"[EnemyAI] Used: {ability.abilityName}");
+        // Esperar el tiempo de la animación de la habilidad.
+        yield return new WaitForSeconds(ability.totalAnimationDuration);
 
-        yield return new WaitForSeconds(Random.Range(0.15f, 0.30f));
+        activeAbility = null;
 
         TransitionTo(AIState.BackingOff, Random.Range(0.4f, 0.9f));
     }
@@ -404,7 +388,16 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
 
         if (physicsStunned && currentState != AIState.Stunned)
         {
+            // 1. Cancelar la habilidad activa para limpiar sus efectos en curso.
+            if (activeAbility != null)
+            {
+                activeAbility.Cancel(gameObject);
+                activeAbility = null;
+            }
+
+            // 2. Parar todas las coroutines (UseAbilityRoutine, Execute interno, etc.).
             StopAllCoroutines();
+
             TransitionTo(AIState.Stunned);
         }
         else if (!physicsStunned && currentState == AIState.Stunned)

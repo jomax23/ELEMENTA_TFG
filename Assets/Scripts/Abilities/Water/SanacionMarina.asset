@@ -16,10 +16,13 @@ MonoBehaviour:
   description: Cura al jugador.
   element: 2
   icon: {fileID: 21300000, guid: fd15d62cb509bca4580266b422ca9780, type: 3}
-  cooldown: 1
+  cooldown: 10
   minRange: 2.3
   maxRange: 20
   aiPriority: 0.3
+  animationStateName: Water4
+  activationDelay: 0
+  totalAnimationDuration: 3
   totalHeal: 30
   duration: 3
   healVfxPrefab: {fileID: 2039271681719962573, guid: e54dbde757599c6468872f3845354b5c, type: 3}

@@ -16,7 +16,13 @@ MonoBehaviour:
   description: Tornado capaz de devolver los proyectiles del enemigo.
   element: 3
   icon: {fileID: 21300000, guid: 8d70a530ebff5c748844e7aa6d164df1, type: 3}
-  cooldown: 1
+  cooldown: 3
+  minRange: 0
+  maxRange: 8
+  aiPriority: 1
+  animationStateName: Air2
+  activationDelay: 0.4
+  totalAnimationDuration: 2.3
   tornadoPrefab: {fileID: 3406735740084466992, guid: 877d782ddcab8d747814fbe1b8927d4d, type: 3}
   spawnOffsetX: 1.5
   spawnOffsetY: 0

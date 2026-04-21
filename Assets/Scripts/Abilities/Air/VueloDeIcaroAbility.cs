@@ -20,4 +20,13 @@ public class VueloDeIcaroAbility : AbilityData
 
         flight.StartFlight(flightDuration);
     }
+
+    /// <summary>
+    /// Si el jugador es stunneado durante el vuelo, lo termina inmediatamente.
+    /// </summary>
+    public override void Cancel(GameObject owner)
+    {
+        PlayerFlight flight = owner.GetComponent<PlayerFlight>();
+        flight?.EndFlight();
+    }
 }

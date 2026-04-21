@@ -9,15 +9,22 @@ public class SanacionMarinaAbility : AbilityData
 {
     [Header("Healing")]
     [SerializeField] private float totalHeal = 30f;
-    [SerializeField] private float duration = 3f;
+    [SerializeField] private float duration  = 3f;
 
     [Header("VFX - Heal")]
     [SerializeField] private GameObject healVfxPrefab;
-    [SerializeField] private Vector3 healVfxOffset = Vector3.zero;
+    [SerializeField] private Vector3    healVfxOffset = Vector3.zero;
 
     [Header("VFX - Dome")]
     [SerializeField] private GameObject domeVfxPrefab;
-    [SerializeField] private Vector3 domeVfxOffset = Vector3.zero;
+    [SerializeField] private Vector3    domeVfxOffset = Vector3.zero;
+
+    // ── Estado runtime ─────────────────────────────────────────────────────────
+    private bool       isCancelled;
+    private GameObject activeHealVfx;
+    private GameObject activeDomeVfx;
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     public override void Activate(GameObject owner)
     {
@@ -35,31 +42,47 @@ public class SanacionMarinaAbility : AbilityData
             return;
         }
 
+        isCancelled  = false;
+        activeHealVfx = null;
+        activeDomeVfx = null;
+
         user.RunCoroutine(HealWithVFX(owner.transform, health));
     }
 
+    /// <summary>
+    /// Detiene la curación y destruye los VFX activos inmediatamente.
+    /// </summary>
+    public override void Cancel(GameObject owner)
+    {
+        isCancelled = true;
+        DestroyVFX();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     private IEnumerator HealWithVFX(Transform owner, Health health)
     {
-        GameObject healVfxInstance = null;
-        GameObject domeVfxInstance = null;
-
+        // Spawn VFX
         if (healVfxPrefab != null)
         {
-            healVfxInstance = Instantiate(healVfxPrefab, owner);
-            healVfxInstance.transform.localPosition = healVfxOffset;
+            activeHealVfx = Instantiate(healVfxPrefab, owner);
+            activeHealVfx.transform.localPosition = healVfxOffset;
         }
 
         if (domeVfxPrefab != null)
         {
-            domeVfxInstance = Instantiate(domeVfxPrefab, owner);
-            domeVfxInstance.transform.localPosition = domeVfxOffset;
+            activeDomeVfx = Instantiate(domeVfxPrefab, owner);
+            activeDomeVfx.transform.localPosition = domeVfxOffset;
         }
 
-        float healed = 0f;
+        float healed        = 0f;
         float healPerSecond = totalHeal / duration;
 
         while (healed < totalHeal)
         {
+            // Abortar si fuimos interrumpidos (Cancel ya habrá destruido los VFX).
+            if (isCancelled) yield break;
+
             float amount = healPerSecond * Time.deltaTime;
             health.Heal(amount);
             healed += amount;
@@ -67,10 +90,22 @@ public class SanacionMarinaAbility : AbilityData
             yield return null;
         }
 
-        if (healVfxInstance != null)
-            Destroy(healVfxInstance);
+        // Curación completada con normalidad → destruir VFX.
+        DestroyVFX();
+    }
 
-        if (domeVfxInstance != null)
-            Destroy(domeVfxInstance);
+    private void DestroyVFX()
+    {
+        if (activeHealVfx != null)
+        {
+            Object.Destroy(activeHealVfx);
+            activeHealVfx = null;
+        }
+
+        if (activeDomeVfx != null)
+        {
+            Object.Destroy(activeDomeVfx);
+            activeDomeVfx = null;
+        }
     }
 }

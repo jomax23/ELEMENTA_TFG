@@ -16,9 +16,12 @@ MonoBehaviour:
   description: Armadura rocosa que proteje al jugador de otras habilidades.
   element: 1
   icon: {fileID: 21300000, guid: ec6a6dea156141e409be8a8eaab98539, type: 3}
-  cooldown: 1
+  cooldown: 4
   minRange: 2.3
   maxRange: 20
   aiPriority: 0.6
+  animationStateName: Earth3
+  activationDelay: 1.5
+  totalAnimationDuration: 3.5
   absorptionAmount: 50
   speedMultiplier: 0.5

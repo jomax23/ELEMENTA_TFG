@@ -12,7 +12,7 @@ public class ElementButtonUI : MonoBehaviour
 
     private void Awake()
     {
-        controller = FindObjectOfType<AbilitiesMenuController>();
+        controller = FindFirstObjectByType<AbilitiesMenuController>();
     }
 
     public void OnClick()

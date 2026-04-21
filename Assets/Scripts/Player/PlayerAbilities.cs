@@ -1,8 +1,23 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
-
+/// <summary>
+/// Orquesta el uso de habilidades del jugador.
+///
+/// Flujo de una habilidad:
+///   1. Input detectado → cooldown arranca, animación reproduce, lock activo.
+///   2. Se espera activationDelay (frame de impacto de la animación).
+///   3. Se llama Activate() → el efecto ocurre.
+///   4. Se espera el tiempo restante hasta totalAnimationDuration.
+///   5. Lock liberado → el jugador recupera el control.
+///
+/// Interrupción por stun (o cualquier efecto que llame a HandleStunInterrupt):
+///   - La coroutine de orquestación se para.
+///   - Se llama Cancel() sobre la habilidad activa para limpiar efectos en curso.
+///   - El lock se libera inmediatamente (PlayerMovement maneja la animación de stun).
+/// </summary>
 public class PlayerAbilities : MonoBehaviour
 {
     [Header("Element")]
@@ -10,10 +25,6 @@ public class PlayerAbilities : MonoBehaviour
     public ElementType CurrentElement => currentElement;
 
     [Header("Abilities")]
-    [SerializeField] private AbilityData abilitySlot1;
-    [SerializeField] private AbilityData abilitySlot2;
-    [SerializeField] private AbilityData abilitySlot3;
-    [SerializeField] private AbilityData abilitySlot4;
     [SerializeField] private AbilitiesHUD abilitiesHUD;
 
     [Header("Input")]
@@ -22,41 +33,64 @@ public class PlayerAbilities : MonoBehaviour
     [SerializeField] private InputActionReference ability3Action;
     [SerializeField] private InputActionReference ability4Action;
     [SerializeField] private InputActionReference changeElementScrollAction;
-    
+
     [Header("Element Ability Sets")]
     [SerializeField] private ElementAbilitySet[] elementAbilitySets;
-    
-    
-    
-    private Dictionary<AbilityData, float> cooldownTimers = new Dictionary<AbilityData, float>();
 
+    [Header("Scroll")]
+    [SerializeField] private float scrollCooldown = 0.15f;
 
-// Slots activos (runtime)
+    // ── Referencias ────────────────────────────────────────────────────────────
+    private PlayerMovement playerMovement;
+
     private AbilityData currentAbility1;
     private AbilityData currentAbility2;
     private AbilityData currentAbility3;
     private AbilityData currentAbility4;
-    
-    [SerializeField] private float scrollCooldown = 0.15f;
+
+    private Dictionary<AbilityData, float> cooldownTimers = new();
     private float scrollTimer;
-    
+
+    // ── Estado de la habilidad activa ──────────────────────────────────────────
+    /// <summary>Coroutine del orquestador. Referencia necesaria para poder cancelarla.</summary>
+    private Coroutine activeAbilityCoroutine;
+
+    /// <summary>
+    /// Habilidad que está ejecutándose ahora mismo.
+    /// Necesaria para poder llamar Cancel() si llega una interrupción.
+    /// </summary>
+    private AbilityData activeAbility;
+
+    // =========================
+    // INIT
+    // =========================
+
+    private void Awake()
+    {
+        playerMovement = GetComponent<PlayerMovement>();
+    }
+
     private void Start()
     {
         LoadAbilitiesForCurrentElement();
-        
-        abilitiesHUD.SetElement(currentElement);
-
-        abilitiesHUD.SetAbilities(
-            currentAbility1,
-            currentAbility2,
-            currentAbility3,
-            currentAbility4
-        );
-        
         InitializeCooldowns();
+
+        abilitiesHUD.SetElement(currentElement);
+        abilitiesHUD.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
+
+        playerMovement.OnStunApplied += HandleStunInterrupt;
     }
 
-    
+    private void OnDestroy()
+    {
+        if (playerMovement != null)
+            playerMovement.OnStunApplied -= HandleStunInterrupt;
+    }
+
+    // =========================
+    // INPUT
+    // =========================
+
     private void OnEnable()
     {
         ability1Action.action.Enable();
@@ -73,7 +107,9 @@ public class PlayerAbilities : MonoBehaviour
         ability3Action.action.Disable();
         ability4Action.action.Disable();
         changeElementScrollAction.action.Disable();
-        StopAllCoroutines();
+
+        // Si se desactiva el componente a mitad de una habilidad, limpiar también.
+        ForceInterrupt();
     }
 
     private void Update()
@@ -81,126 +117,200 @@ public class PlayerAbilities : MonoBehaviour
         UpdateCooldowns();
         HandleElementChangeScroll();
 
-        if (ability1Action.action.WasPressedThisFrame())
-            TryUseAbility(currentAbility1);
+        // Input bloqueado mientras hay una habilidad en curso.
+        if (playerMovement.IsUsingAbility) return;
 
-        if (ability2Action.action.WasPressedThisFrame())
-            TryUseAbility(currentAbility2);
-        
-        if (ability3Action.action.WasPressedThisFrame())
-            TryUseAbility(currentAbility3);
-        
-        if (ability4Action.action.WasPressedThisFrame())
-            TryUseAbility(currentAbility4);
+        if (ability1Action.action.WasPressedThisFrame()) TryUseAbility(currentAbility1);
+        if (ability2Action.action.WasPressedThisFrame()) TryUseAbility(currentAbility2);
+        if (ability3Action.action.WasPressedThisFrame()) TryUseAbility(currentAbility3);
+        if (ability4Action.action.WasPressedThisFrame()) TryUseAbility(currentAbility4);
     }
+
+    // =========================
+    // STUN / INTERRUPCIÓN
+    // =========================
+
+    /// <summary>
+    /// Suscrito a PlayerMovement.OnStunApplied.
+    /// Cancela la habilidad activa limpiando todos sus efectos en curso.
+    /// </summary>
+    private void HandleStunInterrupt() => ForceInterrupt();
+
+    /// <summary>
+    /// Punto único de interrupción forzada (stun, muerte, desactivación del componente…).
+    /// </summary>
+    private void ForceInterrupt()
+    {
+        // 1. Parar la coroutine del orquestador.
+        if (activeAbilityCoroutine != null)
+        {
+            StopCoroutine(activeAbilityCoroutine);
+            activeAbilityCoroutine = null;
+        }
+
+        // 2. Llamar Cancel() en la habilidad activa para que limpie sus efectos
+        //    (haces, VFX, healing, bursts en curso…).
+        if (activeAbility != null)
+        {
+            activeAbility.Cancel(gameObject);
+            activeAbility = null;
+        }
+
+        // 3. Liberar el lock de control para que el stun tome el mando.
+        playerMovement.CancelAbilityAnimation();
+    }
+
+    // =========================
+    // ACTIVACIÓN
+    // =========================
+
+    private void TryUseAbility(AbilityData ability)
+    {
+        if (ability == null) return;
+
+        if (!playerMovement.IsGrounded)
+        {
+            Debug.Log("[PlayerAbilities] No puedes usar habilidades en el aire.");
+            return;
+        }
+
+        if (cooldownTimers[ability] > 0f)
+        {
+            Debug.Log($"[PlayerAbilities] {ability.abilityName} en cooldown.");
+            return;
+        }
+
+        // Cooldown arranca inmediatamente (anti-spam).
+        cooldownTimers[ability] = ability.cooldown;
+        int slotIndex = GetSlotIndex(ability);
+        if (slotIndex != -1)
+            abilitiesHUD.SetCooldown(slotIndex, true);
+
+        // Animación arranca inmediatamente → lock activo desde este momento.
+        if (!string.IsNullOrEmpty(ability.animationStateName))
+            playerMovement.PlayAbilityAnimation(ability.animationStateName);
+
+        // Orquestador: gestiona el timing de activación y el tiempo de bloqueo total.
+        activeAbility           = ability;
+        activeAbilityCoroutine  = StartCoroutine(AbilityLifecycle(ability));
+    }
+
+    /// <summary>
+    /// Coroutine que orquesta el ciclo de vida completo de una habilidad:
+    ///   - Fase 1: esperar el frame de impacto (activationDelay).
+    ///   - Fase 2: ejecutar el efecto.
+    ///   - Fase 3: esperar el tiempo restante de la animación (totalAnimationDuration - activationDelay).
+    ///   - Fase 4: liberar el control.
+    ///
+    /// Si el jugador es stunneado, ForceInterrupt() para esta coroutine externamente
+    /// y llama Cancel() sobre la habilidad.
+    /// </summary>
+    private IEnumerator AbilityLifecycle(AbilityData ability)
+    {
+        // ── Fase 1: esperar frame de impacto ──────────────────────────────────
+        if (ability.activationDelay > 0f)
+            yield return new WaitForSeconds(ability.activationDelay);
+
+        // ── Fase 2: efecto ocurre ─────────────────────────────────────────────
+        ability.Activate(gameObject);
+
+        // ── Fase 3: esperar el resto de la animación ──────────────────────────
+        float lockRemaining = ability.totalAnimationDuration - ability.activationDelay;
+        if (lockRemaining > 0f)
+            yield return new WaitForSeconds(lockRemaining);
+
+        // ── Fase 4: limpiar y liberar control ─────────────────────────────────
+        activeAbility          = null;
+        activeAbilityCoroutine = null;
+        playerMovement.CancelAbilityAnimation();
+    }
+
+    // =========================
+    // COOLDOWNS
+    // =========================
 
     private void InitializeCooldowns()
     {
         cooldownTimers.Clear();
-
         foreach (var set in elementAbilitySets)
         {
-            if (set.ability1 != null && !cooldownTimers.ContainsKey(set.ability1))
-                cooldownTimers.Add(set.ability1, 0f);
-
-            if (set.ability2 != null && !cooldownTimers.ContainsKey(set.ability2))
-                cooldownTimers.Add(set.ability2, 0f);
-            
-            if (set.ability3 != null && !cooldownTimers.ContainsKey(set.ability3))
-                cooldownTimers.Add(set.ability3, 0f);
-            
-            if (set.ability4 != null && !cooldownTimers.ContainsKey(set.ability4))
-                cooldownTimers.Add(set.ability4, 0f);
+            TryRegisterCooldown(set.ability1);
+            TryRegisterCooldown(set.ability2);
+            TryRegisterCooldown(set.ability3);
+            TryRegisterCooldown(set.ability4);
         }
     }
-    
+
+    private void TryRegisterCooldown(AbilityData ability)
+    {
+        if (ability != null && !cooldownTimers.ContainsKey(ability))
+            cooldownTimers.Add(ability, 0f);
+    }
+
     private void UpdateCooldowns()
     {
-        List<AbilityData> keys = new List<AbilityData>(cooldownTimers.Keys);
-
+        var keys = new List<AbilityData>(cooldownTimers.Keys);
         foreach (var ability in keys)
         {
-            if (cooldownTimers[ability] > 0f)
+            if (cooldownTimers[ability] <= 0f) continue;
+
+            cooldownTimers[ability] -= Time.deltaTime;
+
+            if (cooldownTimers[ability] <= 0f)
             {
-                cooldownTimers[ability] -= Time.deltaTime;
-
-                if (cooldownTimers[ability] <= 0f)
-                {
-                    cooldownTimers[ability] = 0f;
-
-                    int slotIndex = GetSlotIndex(ability);
-                    if (slotIndex != -1)
-                        abilitiesHUD.SetCooldown(slotIndex, false);
-                }
+                cooldownTimers[ability] = 0f;
+                int slotIndex = GetSlotIndex(ability);
+                if (slotIndex != -1)
+                    abilitiesHUD.SetCooldown(slotIndex, false);
             }
         }
     }
 
-
+    // =========================
+    // ELEMENT CHANGE
+    // =========================
 
     private void HandleElementChangeScroll()
     {
         scrollTimer -= Time.deltaTime;
-
-        if (scrollTimer > 0f)
-            return;
+        if (scrollTimer > 0f) return;
 
         float scrollValue = changeElementScrollAction.action.ReadValue<float>();
+        if (Mathf.Abs(scrollValue) < 0.01f) return;
 
-        if (Mathf.Abs(scrollValue) < 0.01f)
-            return;
-
-        int direction = scrollValue > 0 ? 1 : -1;
-        ChangeElement(direction);
-
+        ChangeElement(scrollValue > 0 ? 1 : -1);
         scrollTimer = scrollCooldown;
     }
 
     private void ChangeElement(int direction)
     {
         int elementCount = System.Enum.GetValues(typeof(ElementType)).Length;
-
-        int newIndex = ((int)currentElement + direction) % elementCount;
-        if (newIndex < 0)
-            newIndex += elementCount;
-
-        currentElement = (ElementType)newIndex;
+        int newIndex     = ((int)currentElement + direction + elementCount) % elementCount;
+        currentElement   = (ElementType)newIndex;
 
         LoadAbilitiesForCurrentElement();
-        
         abilitiesHUD.SetElement(currentElement);
-
-        abilitiesHUD.SetAbilities(
-            currentAbility1,
-            currentAbility2,
-            currentAbility3,
-            currentAbility4
-        );
-        
+        abilitiesHUD.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
         RefreshCooldownHUD();
-
-        Debug.Log($"Elemento actual: {currentElement}");
     }
 
-
-    private void TryUseAbility(AbilityData ability)
+    private void LoadAbilitiesForCurrentElement()
     {
-        if (ability == null)
-            return;
-
-        if (cooldownTimers[ability] > 0f)
+        foreach (var set in elementAbilitySets)
         {
-            Debug.Log($"Habilidad en cooldown: {ability.abilityName}");
+            if (set.element != currentElement) continue;
+            currentAbility1 = set.ability1;
+            currentAbility2 = set.ability2;
+            currentAbility3 = set.ability3;
+            currentAbility4 = set.ability4;
             return;
         }
-
-        ability.Activate(gameObject);
-        cooldownTimers[ability] = ability.cooldown;
-
-        int slotIndex = GetSlotIndex(ability);
-        if (slotIndex != -1)
-            abilitiesHUD.SetCooldown(slotIndex, true);
+        Debug.LogWarning($"[PlayerAbilities] Sin habilidades para {currentElement}.");
     }
+
+    // =========================
+    // HELPERS
+    // =========================
 
     private int GetSlotIndex(AbilityData ability)
     {
@@ -213,73 +323,18 @@ public class PlayerAbilities : MonoBehaviour
 
     private void RefreshCooldownHUD()
     {
-        // Slot 0
-        if (currentAbility1 != null &&
-            cooldownTimers.ContainsKey(currentAbility1) &&
-            cooldownTimers[currentAbility1] > 0f)
-        {
-            abilitiesHUD.SetCooldown(0, true);
-        }
-        else
-        {
-            abilitiesHUD.SetCooldown(0, false);
-        }
-
-        // Slot 1
-        if (currentAbility2 != null &&
-            cooldownTimers.ContainsKey(currentAbility2) &&
-            cooldownTimers[currentAbility2] > 0f)
-        {
-            abilitiesHUD.SetCooldown(1, true);
-        }
-        else
-        {
-            abilitiesHUD.SetCooldown(1, false);
-        }
-        
-        // Slot 2
-        if (currentAbility3 != null &&
-            cooldownTimers.ContainsKey(currentAbility3) &&
-            cooldownTimers[currentAbility3] > 0f)
-        {
-            abilitiesHUD.SetCooldown(2, true);
-        }
-        else
-        {
-            abilitiesHUD.SetCooldown(2, false);
-        }
-        
-        // Slot 3
-        if (currentAbility4 != null &&
-            cooldownTimers.ContainsKey(currentAbility4) &&
-            cooldownTimers[currentAbility4] > 0f)
-        {
-            abilitiesHUD.SetCooldown(3, true);
-        }
-        else
-        {
-            abilitiesHUD.SetCooldown(3, false);
-        }
+        RefreshSlot(0, currentAbility1);
+        RefreshSlot(1, currentAbility2);
+        RefreshSlot(2, currentAbility3);
+        RefreshSlot(3, currentAbility4);
     }
 
-    
-    private void LoadAbilitiesForCurrentElement()
+    private void RefreshSlot(int index, AbilityData ability)
     {
-        foreach (var set in elementAbilitySets)
-        {
-            if (set.element == currentElement)
-            {
-                currentAbility1 = set.ability1;
-                currentAbility2 = set.ability2;
-                currentAbility3 = set.ability3;
-                currentAbility4 = set.ability4;
-                return;
-            }
-        }
+        bool onCooldown = ability != null
+            && cooldownTimers.ContainsKey(ability)
+            && cooldownTimers[ability] > 0f;
 
-        Debug.LogWarning(
-            $"No hay habilidades asignadas para el elemento {currentElement}"
-        );
+        abilitiesHUD.SetCooldown(index, onCooldown);
     }
-
 }

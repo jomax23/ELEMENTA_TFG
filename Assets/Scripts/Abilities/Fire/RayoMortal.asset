@@ -16,8 +16,11 @@ MonoBehaviour:
   description: "Rayo que hace da\xF1o grave y paraliza."
   element: 0
   icon: {fileID: 21300000, guid: ec413e63c48b1224ba61827cc1539583, type: 3}
-  cooldown: 1
+  cooldown: 10
   minRange: 2.3
   maxRange: 20
   aiPriority: 0.3
+  animationStateName: Fire4
+  activationDelay: 0.46
+  totalAnimationDuration: 2.1
   beamPrefab: {fileID: 1589819868445927582, guid: 93d9c4ad9870c4144bc920842c0e2624, type: 3}

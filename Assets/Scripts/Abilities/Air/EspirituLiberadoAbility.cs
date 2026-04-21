@@ -10,6 +10,11 @@ public class EspirituLiberadoAbility : AbilityData
     [Header("Spirit Mode")]
     [SerializeField] private float duration = 4f;
 
+    // ── Estado runtime ─────────────────────────────────────────────────────────
+    private bool isCancelled;
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     public override void Activate(GameObject owner)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
@@ -22,12 +27,27 @@ public class EspirituLiberadoAbility : AbilityData
         SceneEffectsController fx = SceneEffectsController.Instance;
         if (fx == null)
         {
-            Debug.LogError($"[{nameof(EspirituLiberadoAbility)}] SceneEffectsController.Instance es null. ¿Está en escena?");
+            Debug.LogError($"[{nameof(EspirituLiberadoAbility)}] SceneEffectsController.Instance es null.");
             return;
         }
 
+        isCancelled = false;
         user.RunCoroutine(SpiritRoutine(fx));
     }
+
+    /// <summary>
+    /// Deshabilita el modo espíritu inmediatamente si hay una interrupción.
+    /// </summary>
+    public override void Cancel(GameObject owner)
+    {
+        isCancelled = true;
+
+        SceneEffectsController fx = SceneEffectsController.Instance;
+        if (fx != null)
+            fx.DisableSpiritMode();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     private IEnumerator SpiritRoutine(SceneEffectsController fx)
     {
@@ -35,6 +55,8 @@ public class EspirituLiberadoAbility : AbilityData
 
         yield return new WaitForSeconds(duration);
 
-        fx.DisableSpiritMode();
+        // Si Cancel() fue llamado durante la espera, ya habrá llamado DisableSpiritMode().
+        if (!isCancelled)
+            fx.DisableSpiritMode();
     }
 }

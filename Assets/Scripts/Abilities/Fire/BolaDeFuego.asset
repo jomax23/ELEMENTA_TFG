@@ -16,8 +16,11 @@ MonoBehaviour:
   description: Disparo de fuego que quema al objetivo.
   element: 0
   icon: {fileID: 21300000, guid: 5fe415ad81e01f24ea74bd6bff74aae5, type: 3}
-  cooldown: 2
+  cooldown: 3
   minRange: 2.3
   maxRange: 20
   aiPriority: 1
+  animationStateName: Fire1
+  activationDelay: 0.5
+  totalAnimationDuration: 1
   fireballPrefab: {fileID: -8769733655855753720, guid: d4966e8f53a42c4429272f8bf8c8262f, type: 3}
