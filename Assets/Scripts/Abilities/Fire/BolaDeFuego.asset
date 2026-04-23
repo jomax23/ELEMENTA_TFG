@@ -22,5 +22,6 @@ MonoBehaviour:
   aiPriority: 1
   animationStateName: Fire1
   activationDelay: 0.5
-  totalAnimationDuration: 1
+  totalAnimationDuration: 1.2
+  activationSound: {fileID: 0}
   fireballPrefab: {fileID: -8769733655855753720, guid: d4966e8f53a42c4429272f8bf8c8262f, type: 3}

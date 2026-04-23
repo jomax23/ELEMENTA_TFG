@@ -100,4 +100,19 @@ public abstract class AbilityData : ScriptableObject
         }
     }
 #endif
+    
+    
+    /// <summary>Busca un Transform por nombre en toda la jerarquía, no solo hijos directos.</summary>
+    public static Transform FindDeep(Transform root, string name)
+    {
+        if (root.name == name) return root;
+
+        foreach (Transform child in root)
+        {
+            Transform result = FindDeep(child, name);
+            if (result != null) return result;
+        }
+
+        return null;
+    }
 }

@@ -21,6 +21,7 @@ MonoBehaviour:
   maxRange: 20
   aiPriority: 0.3
   animationStateName: Fire4
-  activationDelay: 0.46
-  totalAnimationDuration: 2.1
+  activationDelay: 1.06
+  totalAnimationDuration: 2.16
+  activationSound: {fileID: 0}
   beamPrefab: {fileID: 1589819868445927582, guid: 93d9c4ad9870c4144bc920842c0e2624, type: 3}

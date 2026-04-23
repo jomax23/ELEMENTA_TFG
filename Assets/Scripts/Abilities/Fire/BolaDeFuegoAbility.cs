@@ -19,7 +19,7 @@ public class BolaDeFuegoAbility : AbilityData
             return;
         }
 
-        Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
+        Transform spawnPoint = AbilityData.FindDeep(owner.transform, "LeftHandSpawn");
         if (spawnPoint == null)
         {
             Debug.LogError($"[{nameof(BolaDeFuegoAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);

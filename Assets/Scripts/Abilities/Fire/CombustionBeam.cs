@@ -17,13 +17,7 @@ public class CombustionBeam : MonoBehaviour
     MaterialPropertyBlock mpb;
     Renderer rend;
     
-    public void Initialize(
-        Transform start,
-        Vector3 dir,
-        float distance,
-        LayerMask obstacles,
-        float beamDuration
-    )
+    public void Initialize(Transform start, Vector3 dir, float distance, LayerMask obstacles, float beamDuration)
     {
         startPoint = start;
         direction = dir;

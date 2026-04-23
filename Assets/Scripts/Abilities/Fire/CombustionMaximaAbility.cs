@@ -35,7 +35,8 @@ public class CombustionMaximaAbility : AbilityData
             return;
         }
 
-        Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
+        Transform spawnPoint = AbilityData.FindDeep(owner.transform, "HeadSpawn");
+
         if (spawnPoint == null)
         {
             Debug.LogError($"[{nameof(CombustionMaximaAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);

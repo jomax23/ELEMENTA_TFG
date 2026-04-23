@@ -22,6 +22,7 @@ MonoBehaviour:
   maxRange: 20
   aiPriority: 1
   animationStateName: Fire2
-  activationDelay: 1.5
-  totalAnimationDuration: 3.5
+  activationDelay: 1
+  totalAnimationDuration: 2.6
+  activationSound: {fileID: 0}
   explosionPrefab: {fileID: 9199726164040676820, guid: d029efd84fb819549a20efb0014647f6, type: 3}

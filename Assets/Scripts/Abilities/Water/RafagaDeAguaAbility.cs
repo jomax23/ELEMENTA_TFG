@@ -34,7 +34,7 @@ public class RafagaDeAguaAbility : AbilityData
             return;
         }
 
-        Transform spawnPoint = owner.transform.Find("ProjectileSpawnPoint");
+        Transform spawnPoint = AbilityData.FindDeep(owner.transform, "RightHandSpawn");
         if (spawnPoint == null)
         {
             Debug.LogError($"[{nameof(RafagaDeAguaAbility)}] ProjectileSpawnPoint no encontrado en {owner.name}.", owner);
