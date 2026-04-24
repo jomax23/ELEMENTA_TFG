@@ -3,21 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
-/// <summary>
-/// Orquesta el uso de habilidades del jugador.
-///
-/// Flujo de una habilidad:
-///   1. Input detectado → cooldown arranca, animación reproduce, lock activo.
-///   2. Se espera activationDelay (frame de impacto de la animación).
-///   3. Se llama Activate() → el efecto ocurre.
-///   4. Se espera el tiempo restante hasta totalAnimationDuration.
-///   5. Lock liberado → el jugador recupera el control.
-///
-/// Interrupción por stun (o cualquier efecto que llame a HandleStunInterrupt):
-///   - La coroutine de orquestación se para.
-///   - Se llama Cancel() sobre la habilidad activa para limpiar efectos en curso.
-///   - El lock se libera inmediatamente (PlayerMovement maneja la animación de stun).
-/// </summary>
 public class PlayerAbilities : MonoBehaviour
 {
     [Header("Element")]
@@ -26,6 +11,7 @@ public class PlayerAbilities : MonoBehaviour
 
     [Header("Abilities")]
     [SerializeField] private AbilitiesHUD abilitiesHUD;
+    [SerializeField] private AffinityHUD  affinityHUD;
 
     [Header("Input")]
     [SerializeField] private InputActionReference ability1Action;
@@ -49,17 +35,17 @@ public class PlayerAbilities : MonoBehaviour
     private AbilityData currentAbility4;
 
     private Dictionary<AbilityData, float> cooldownTimers = new();
+
+    // Cache para evitar alloc por frame en UpdateCooldowns
+    private AbilityData[] cooldownKeys;
+
     private float scrollTimer;
 
-    // ── Estado de la habilidad activa ──────────────────────────────────────────
-    /// <summary>Coroutine del orquestador. Referencia necesaria para poder cancelarla.</summary>
-    private Coroutine activeAbilityCoroutine;
-
-    /// <summary>
-    /// Habilidad que está ejecutándose ahora mismo.
-    /// Necesaria para poder llamar Cancel() si llega una interrupción.
-    /// </summary>
+    private Coroutine   activeAbilityCoroutine;
     private AbilityData activeAbility;
+
+    private ElementType  mainElement;
+    private AffinityData affinityData;
 
     // =========================
     // INIT
@@ -72,11 +58,27 @@ public class PlayerAbilities : MonoBehaviour
 
     private void Start()
     {
+        if (GameSession.Instance != null)
+        {
+            mainElement  = GameSession.Instance.MainElement;
+            affinityData = GameSession.Instance.AffinityData;
+
+            // El elemento inicial ES el elegido por el jugador, no el del Inspector
+            currentElement = mainElement;
+        }
+        else
+        {
+            Debug.LogWarning("[PlayerAbilities] GameSession no encontrado. Sin afinidad.", this);
+            mainElement  = currentElement;
+            affinityData = null;
+        }
+
         LoadAbilitiesForCurrentElement();
         InitializeCooldowns();
 
         abilitiesHUD.SetElement(currentElement);
         abilitiesHUD.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
+        affinityHUD?.Refresh(currentElement);
 
         playerMovement.OnStunApplied += HandleStunInterrupt;
     }
@@ -107,8 +109,6 @@ public class PlayerAbilities : MonoBehaviour
         ability3Action.action.Disable();
         ability4Action.action.Disable();
         changeElementScrollAction.action.Disable();
-
-        // Si se desactiva el componente a mitad de una habilidad, limpiar también.
         ForceInterrupt();
     }
 
@@ -117,7 +117,6 @@ public class PlayerAbilities : MonoBehaviour
         UpdateCooldowns();
         HandleElementChangeScroll();
 
-        // Input bloqueado mientras hay una habilidad en curso.
         if (playerMovement.IsUsingAbility) return;
 
         if (ability1Action.action.WasPressedThisFrame()) TryUseAbility(currentAbility1);
@@ -130,33 +129,22 @@ public class PlayerAbilities : MonoBehaviour
     // STUN / INTERRUPCIÓN
     // =========================
 
-    /// <summary>
-    /// Suscrito a PlayerMovement.OnStunApplied.
-    /// Cancela la habilidad activa limpiando todos sus efectos en curso.
-    /// </summary>
     private void HandleStunInterrupt() => ForceInterrupt();
 
-    /// <summary>
-    /// Punto único de interrupción forzada (stun, muerte, desactivación del componente…).
-    /// </summary>
     private void ForceInterrupt()
     {
-        // 1. Parar la coroutine del orquestador.
         if (activeAbilityCoroutine != null)
         {
             StopCoroutine(activeAbilityCoroutine);
             activeAbilityCoroutine = null;
         }
 
-        // 2. Llamar Cancel() en la habilidad activa para que limpie sus efectos
-        //    (haces, VFX, healing, bursts en curso…).
         if (activeAbility != null)
         {
             activeAbility.Cancel(gameObject);
             activeAbility = null;
         }
 
-        // 3. Liberar el lock de control para que el stun tome el mando.
         playerMovement.CancelAbilityAnimation();
     }
 
@@ -174,71 +162,77 @@ public class PlayerAbilities : MonoBehaviour
             return;
         }
 
-        if (cooldownTimers[ability] > 0f)
+        if (cooldownTimers.TryGetValue(ability, out float remaining) && remaining > 0f)
         {
-            Debug.Log($"[PlayerAbilities] {ability.abilityName} en cooldown.");
+            Debug.Log($"[PlayerAbilities] {ability.abilityName} en cooldown ({remaining:F1}s).");
             return;
         }
 
-        // Cooldown arranca inmediatamente (anti-spam).
-        cooldownTimers[ability] = ability.cooldown;
+        float cooldownMult      = GetCooldownMultiplierForAbility(ability);
+        cooldownTimers[ability] = ability.cooldown * cooldownMult;
+
         int slotIndex = GetSlotIndex(ability);
         if (slotIndex != -1)
             abilitiesHUD.SetCooldown(slotIndex, true);
 
-        // Animación arranca inmediatamente → lock activo desde este momento.
         if (!string.IsNullOrEmpty(ability.animationStateName))
             playerMovement.PlayAbilityAnimation(ability.animationStateName);
 
-        // Orquestador: gestiona el timing de activación y el tiempo de bloqueo total.
-        activeAbility           = ability;
-        activeAbilityCoroutine  = StartCoroutine(AbilityLifecycle(ability));
+        activeAbility          = ability;
+        activeAbilityCoroutine = StartCoroutine(AbilityLifecycle(ability));
     }
 
-    /// <summary>
-    /// Coroutine que orquesta el ciclo de vida completo de una habilidad:
-    ///   - Fase 1: esperar el frame de impacto (activationDelay).
-    ///   - Fase 2: ejecutar el efecto.
-    ///   - Fase 3: esperar el tiempo restante de la animación (totalAnimationDuration - activationDelay).
-    ///   - Fase 4: liberar el control.
-    ///
-    /// Si el jugador es stunneado, ForceInterrupt() para esta coroutine externamente
-    /// y llama Cancel() sobre la habilidad.
-    /// </summary>
     private IEnumerator AbilityLifecycle(AbilityData ability)
     {
-        // ── Fase 1: esperar frame de impacto ──────────────────────────────────
         if (ability.activationDelay > 0f)
             yield return new WaitForSeconds(ability.activationDelay);
 
-        // ── Fase 2: efecto ocurre + SFX de activación ────────────────────────
-        ability.ActivateWithAudio(gameObject);
+        float efficiency = GetEfficiencyForAbility(ability);
+        ability.ActivateWithAudio(gameObject, efficiency);
 
-        // ── Fase 3: esperar el resto de la animación ──────────────────────────
         float lockRemaining = ability.totalAnimationDuration - ability.activationDelay;
         if (lockRemaining > 0f)
             yield return new WaitForSeconds(lockRemaining);
 
-        // ── Fase 4: limpiar y liberar control ─────────────────────────────────
         activeAbility          = null;
         activeAbilityCoroutine = null;
         playerMovement.CancelAbilityAnimation();
     }
 
     // =========================
-    // COOLDOWNS
+    // AFFINITY
+    // =========================
+
+    private float GetEfficiencyForAbility(AbilityData ability)
+    {
+        if (affinityData == null) return 1f;
+        return affinityData.GetEfficiency(mainElement, ability.element);
+    }
+
+    private float GetCooldownMultiplierForAbility(AbilityData ability)
+    {
+        if (affinityData == null) return 1f;
+        return affinityData.GetCooldownMultiplier(mainElement, ability.element);
+    }
+
+    // =========================
+    // COOLDOWNS — sin alloc por frame
     // =========================
 
     private void InitializeCooldowns()
     {
         cooldownTimers.Clear();
-        foreach (var set in elementAbilitySets)
+        foreach (ElementAbilitySet set in elementAbilitySets)
         {
             TryRegisterCooldown(set.ability1);
             TryRegisterCooldown(set.ability2);
             TryRegisterCooldown(set.ability3);
             TryRegisterCooldown(set.ability4);
         }
+
+        // Cachear el array de keys una sola vez
+        cooldownKeys = new AbilityData[cooldownTimers.Count];
+        cooldownTimers.Keys.CopyTo(cooldownKeys, 0);
     }
 
     private void TryRegisterCooldown(AbilityData ability)
@@ -249,9 +243,11 @@ public class PlayerAbilities : MonoBehaviour
 
     private void UpdateCooldowns()
     {
-        var keys = new List<AbilityData>(cooldownTimers.Keys);
-        foreach (var ability in keys)
+        if (cooldownKeys == null) return;
+
+        for (int i = 0; i < cooldownKeys.Length; i++)
         {
+            AbilityData ability = cooldownKeys[i];
             if (cooldownTimers[ability] <= 0f) continue;
 
             cooldownTimers[ability] -= Time.deltaTime;
@@ -291,21 +287,35 @@ public class PlayerAbilities : MonoBehaviour
         LoadAbilitiesForCurrentElement();
         abilitiesHUD.SetElement(currentElement);
         abilitiesHUD.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
+        affinityHUD?.Refresh(currentElement);
         RefreshCooldownHUD();
     }
 
     private void LoadAbilitiesForCurrentElement()
     {
-        foreach (var set in elementAbilitySets)
+        ElementAbilitySet set = FindAbilitySet(currentElement);
+        if (set == null)
         {
-            if (set.element != currentElement) continue;
-            currentAbility1 = set.ability1;
-            currentAbility2 = set.ability2;
-            currentAbility3 = set.ability3;
-            currentAbility4 = set.ability4;
+            Debug.LogWarning($"[PlayerAbilities] Sin ElementAbilitySet para {currentElement}.");
+            currentAbility1 = currentAbility2 = currentAbility3 = currentAbility4 = null;
             return;
         }
-        Debug.LogWarning($"[PlayerAbilities] Sin habilidades para {currentElement}.");
+
+        int availableCount = affinityData != null
+            ? affinityData.GetAvailableAbilityCount(mainElement, currentElement)
+            : 4;
+
+        currentAbility1 = availableCount >= 1 ? set.ability1 : null;
+        currentAbility2 = availableCount >= 2 ? set.ability2 : null;
+        currentAbility3 = availableCount >= 3 ? set.ability3 : null;
+        currentAbility4 = availableCount >= 4 ? set.ability4 : null;
+    }
+
+    private ElementAbilitySet FindAbilitySet(ElementType element)
+    {
+        foreach (ElementAbilitySet set in elementAbilitySets)
+            if (set.element == element) return set;
+        return null;
     }
 
     // =========================
@@ -334,7 +344,6 @@ public class PlayerAbilities : MonoBehaviour
         bool onCooldown = ability != null
             && cooldownTimers.ContainsKey(ability)
             && cooldownTimers[ability] > 0f;
-
         abilitiesHUD.SetCooldown(index, onCooldown);
     }
 }

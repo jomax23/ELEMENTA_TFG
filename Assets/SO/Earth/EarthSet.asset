@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee088a89e407f6a4793eb159b3cbab93, type: 3}
+  m_Name: EarthSet
+  m_EditorClassIdentifier: 
+  element: 1
+  ability1: {fileID: 11400000, guid: bb4cd65b0b588554aa8528977ce29f48, type: 2}
+  ability2: {fileID: 11400000, guid: ed1181b6dab21504faa76cb3d8f6572a, type: 2}
+  ability3: {fileID: 11400000, guid: 9b196c1fd932687469d3a7ab4e42cbb9, type: 2}
+  ability4: {fileID: 11400000, guid: 3b0d36a7fd5bd7c4a896f7faec1c6c8c, type: 2}

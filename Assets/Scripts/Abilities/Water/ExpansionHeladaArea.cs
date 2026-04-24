@@ -3,17 +3,18 @@ using UnityEngine;
 public class ExpansionHeladaArea : MonoBehaviour
 {
     [Header("Expansion Settings")]
-    [SerializeField] private float maxLength    = 8f;
-    [SerializeField] private float expandSpeed  = 12f;
-    [SerializeField] private float lifetime     = 1.5f;
+    [SerializeField] private float maxLength   = 8f;
+    [SerializeField] private float expandSpeed = 12f;
+    [SerializeField] private float lifetime    = 1.5f;
 
     [Header("Damage")]
     [SerializeField] private float damage = 15f;
 
     private BoxCollider hitbox;
-    private int       directionX;
-    private float     currentLength;
-    private LayerMask targetLayers;
+    private int         directionX;
+    private float       currentLength;
+    private LayerMask   targetLayers;
+    private float       actualDamage;
 
     private void Awake()
     {
@@ -21,10 +22,12 @@ public class ExpansionHeladaArea : MonoBehaviour
         hitbox.isTrigger = true;
     }
 
-    public void Initialize(int facingDirection, LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño.</param>
+    public void Initialize(int facingDirection, LayerMask layers, float efficiency = 1f)
     {
         directionX   = facingDirection;
         targetLayers = layers;
+        actualDamage = damage * efficiency;
 
         transform.right = Vector3.right * directionX;
 
@@ -58,7 +61,7 @@ public class ExpansionHeladaArea : MonoBehaviour
             return;
 
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
-        target?.ApplyDamage(damage);
+        target?.ApplyDamage(actualDamage);
     }
 
 #if UNITY_EDITOR

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d403b11e830412c9dba99b040096ffa, type: 3}
+  m_Name: CombustionMaxima
+  m_EditorClassIdentifier: 
+  abilityName: "Combusti\xF3n M\xE1xima"
+  description: 
+  element: 0
+  icon: {fileID: 21300000, guid: 5836902e936fe9646a6428d0bce150c4, type: 3}
+  cooldown: 7
+  minRange: 0
+  maxRange: 8
+  aiPriority: 1
+  animationStateName: Fire3
+  activationDelay: 0
+  totalAnimationDuration: 1
+  activationSound: {fileID: 0}
+  airBeamPrefab: {fileID: 7416166309540247779, guid: 69ec03dd24db84245a7b993db4f02872, type: 3}
+  airBeamDuration: 1
+  maxDistance: 20
+  fireballPrefab: {fileID: -8769733655855753720, guid: 3bb649b33cc47de408fe899a180bdec3, type: 3}
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 0

@@ -1,5 +1,16 @@
 using UnityEngine;
 
+/// <summary>
+/// Base class para todos los datos de habilidad.
+///
+/// CAMBIO vs versión anterior:
+///   Activate() y ActivateWithAudio() ahora aceptan un parámetro <c>efficiency</c> (0–1).
+///   Las subclases deben pasar este valor a sus proyectiles/áreas para que apliquen
+///   las penalizaciones de afinidad (daño reducido, duraciones más cortas, etc.).
+///
+///   Compatibilidad con llamadas antiguas: el parámetro tiene valor por defecto 1f,
+///   por lo que el código del enemigo (EnemyAI) no requiere modificación.
+/// </summary>
 public abstract class AbilityData : ScriptableObject
 {
     [Header("Basic Info")]
@@ -41,14 +52,12 @@ public abstract class AbilityData : ScriptableObject
 
     [Tooltip("Duración total del bloqueo de control que impone esta habilidad. " +
              "El jugador NO puede moverse, saltar ni usar otras habilidades durante este tiempo. " +
-             "Debe ser >= activationDelay. Configúralo para que coincida con la duración real de tu " +
-             "animación de habilidad en el Animator.")]
+             "Debe ser >= activationDelay.")]
     [Min(0f)]
     public float totalAnimationDuration = 1f;
 
     [Header("Audio")]
-    [Tooltip("Sonido que se reproduce en el momento exacto de activación " +
-             "(cuando el efecto ocurre, es decir, tras el activationDelay).")]
+    [Tooltip("Sonido que se reproduce en el momento exacto de activación.")]
     [SerializeField] private SoundData activationSound;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -56,30 +65,34 @@ public abstract class AbilityData : ScriptableObject
     // ─────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Ejecuta el efecto de la habilidad.
-    /// Llamado automáticamente por PlayerAbilities en el frame de impacto (tras activationDelay).
+    /// Ejecuta el efecto de la habilidad aplicando el multiplicador de eficiencia de afinidad.
+    ///
+    /// <paramref name="efficiency"/> escala daño, curación, duración e intensidad de efectos.
+    ///   · 1.0 = elemento principal (sin penalización).
+    ///   · 0.6 = elemento afín secundario.
+    ///   · 0.3 = elemento lejano.
+    ///   · 0.0 = elemento bloqueado (nunca debe llegar a llamarse).
     /// </summary>
-    public abstract void Activate(GameObject owner);
+    public abstract void Activate(GameObject owner, float efficiency = 1f);
 
     /// <summary>
     /// Reproduce el SFX y llama a Activate().
     /// PlayerAbilities usa este método en lugar de Activate() directamente.
     /// </summary>
-    public void ActivateWithAudio(GameObject owner)
+    public void ActivateWithAudio(GameObject owner, float efficiency = 1f)
     {
         if (activationSound != null)
             AudioManager.Instance?.PlaySFX(activationSound);
 
-        Activate(owner);
+        Activate(owner, efficiency);
     }
 
     /// <summary>
     /// Cancela todos los efectos en curso de esta habilidad.
-    /// PlayerAbilities lo llama cuando el usuario es interrumpido (stun, muerte, etc.)
-    /// antes de que la habilidad haya terminado su ciclo completo.
+    /// PlayerAbilities lo llama cuando el usuario es interrumpido antes de que
+    /// la habilidad haya terminado su ciclo completo.
     ///
-    /// Las subclases con efectos persistentes (haces, VFX, healing over time, bursts)
-    /// DEBEN hacer override aquí para destruir objetos spawneados y abortar coroutines internas.
+    /// Las subclases con efectos persistentes DEBEN hacer override aquí.
     /// Las habilidades instantáneas no necesitan override.
     /// </summary>
     public virtual void Cancel(GameObject owner) { }
@@ -87,8 +100,6 @@ public abstract class AbilityData : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        // Garantiza que la duración total nunca sea menor que el delay de activación,
-        // lo que produciría un timer negativo (unlock antes de que el efecto ocurra).
         if (totalAnimationDuration < activationDelay)
         {
             totalAnimationDuration = activationDelay;
@@ -100,19 +111,16 @@ public abstract class AbilityData : ScriptableObject
         }
     }
 #endif
-    
-    
-    /// <summary>Busca un Transform por nombre en toda la jerarquía, no solo hijos directos.</summary>
+
+    /// <summary>Busca un Transform por nombre en toda la jerarquía (no solo hijos directos).</summary>
     public static Transform FindDeep(Transform root, string name)
     {
         if (root.name == name) return root;
-
         foreach (Transform child in root)
         {
             Transform result = FindDeep(child, name);
             if (result != null) return result;
         }
-
         return null;
     }
 }

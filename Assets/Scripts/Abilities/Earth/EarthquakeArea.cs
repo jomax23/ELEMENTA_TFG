@@ -10,14 +10,19 @@ public class EarthquakeArea : MonoBehaviour
     [SerializeField] private float damagePerSecond = 5f;
 
     private LayerMask targetLayers;
-    private float timer;
-    private bool  initialized;
+    private float     timer;
+    private bool      initialized;
+    private float     actualStunDuration;
+    private float     actualDamagePerSecond;
 
-    public void Initialize(LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño/segundo y stun.</param>
+    public void Initialize(LayerMask layers, float efficiency = 1f)
     {
-        targetLayers = layers;
-        initialized  = true;
-        timer        = duration;
+        targetLayers          = layers;
+        actualStunDuration    = stunDuration    * efficiency;
+        actualDamagePerSecond = damagePerSecond * efficiency;
+        initialized           = true;
+        timer                 = duration;
     }
 
     private void Update()
@@ -37,7 +42,7 @@ public class EarthquakeArea : MonoBehaviour
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
         if (target == null) return;
 
-        target.ApplyStun(stunDuration);
-        target.ApplyDamage(damagePerSecond * Time.deltaTime);
+        target.ApplyStun(actualStunDuration);
+        target.ApplyDamage(actualDamagePerSecond * Time.deltaTime);
     }
 }

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dc0118ad9fd4a1f924bcb1b7d42e03e, type: 3}
+  m_Name: GolpeDeMarea
+  m_EditorClassIdentifier: 
+  abilityName: Golpre de Marea
+  description: 
+  element: 2
+  icon: {fileID: 21300000, guid: 9b854db0776b62b45ba1a118482d6059, type: 3}
+  cooldown: 5
+  minRange: 0
+  maxRange: 8
+  aiPriority: 1
+  animationStateName: Water1
+  activationDelay: 0
+  totalAnimationDuration: 1
+  activationSound: {fileID: 0}
+  wavePrefab: {fileID: -8540998114614274175, guid: 11e47b6a0efd59646b77b203c3a87999, type: 3}
+  spawnOffset: 1.5

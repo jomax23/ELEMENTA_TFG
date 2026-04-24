@@ -64,7 +64,7 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _Max: 1
-    - _Min: 0.24
+    - _Min: 0.97
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Shades: 0.49

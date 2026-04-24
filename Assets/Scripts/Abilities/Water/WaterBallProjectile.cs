@@ -11,12 +11,18 @@ public class WaterBallProjectile : MonoBehaviour, IReversible
     [SerializeField] private float damage    = 10f;
 
     private LayerMask targetLayers;
-    private float directionX;
+    private float     directionX;
+    private float     actualPushForce;
+    private float     actualDamage;
 
-    public void Initialize(float dirX, LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño e impulso.</param>
+    public void Initialize(float dirX, LayerMask layers, float efficiency = 1f)
     {
-        directionX   = Mathf.Sign(dirX);
-        targetLayers = layers;
+        directionX     = Mathf.Sign(dirX);
+        targetLayers   = layers;
+        actualPushForce = pushForce * efficiency;
+        actualDamage    = damage    * efficiency;
+
         Destroy(gameObject, lifetime);
     }
 
@@ -33,8 +39,8 @@ public class WaterBallProjectile : MonoBehaviour, IReversible
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
         if (target != null)
         {
-            target.ApplyImpulse(directionX * pushForce);
-            target.ApplyDamage(damage);
+            target.ApplyImpulse(directionX * actualPushForce);
+            target.ApplyDamage(actualDamage);
         }
 
         Destroy(gameObject);

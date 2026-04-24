@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b41c3bb2fe7cae46aa6d8b333e99e79, type: 3}
+  m_Name: AffinityData
+  m_EditorClassIdentifier: 
+  affinities:
+  - mainElement: 0
+    rows:
+    - element: 0
+      availableAbilities: 4
+      efficiency: 1
+    - element: 1
+      availableAbilities: 3
+      efficiency: 0.6
+    - element: 3
+      availableAbilities: 2
+      efficiency: 0.3
+    - element: 2
+      availableAbilities: 0
+      efficiency: 0
+  - mainElement: 1
+    rows:
+    - element: 1
+      availableAbilities: 4
+      efficiency: 1
+    - element: 0
+      availableAbilities: 3
+      efficiency: 0.6
+    - element: 2
+      availableAbilities: 2
+      efficiency: 0.3
+    - element: 3
+      availableAbilities: 0
+      efficiency: 0
+  - mainElement: 2
+    rows:
+    - element: 2
+      availableAbilities: 4
+      efficiency: 1
+    - element: 3
+      availableAbilities: 3
+      efficiency: 0.6
+    - element: 1
+      availableAbilities: 2
+      efficiency: 0.3
+    - element: 0
+      availableAbilities: 0
+      efficiency: 0
+  - mainElement: 3
+    rows:
+    - element: 3
+      availableAbilities: 4
+      efficiency: 1
+    - element: 2
+      availableAbilities: 3
+      efficiency: 0.6
+    - element: 0
+      availableAbilities: 2
+      efficiency: 0.3
+    - element: 1
+      availableAbilities: 0
+      efficiency: 0

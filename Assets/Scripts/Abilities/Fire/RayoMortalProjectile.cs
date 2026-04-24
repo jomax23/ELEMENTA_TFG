@@ -8,17 +8,20 @@ public class RayoMortalProjectile : MonoBehaviour
     [SerializeField] private float lifetime     = 0.15f;
 
     private LayerMask targetLayers;
+    private float     actualDamage;
+    private float     actualStunDuration;
 
-    public void Initialize(int directionX, LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño y duración del stun.</param>
+    public void Initialize(int directionX, LayerMask layers, float efficiency = 1f)
     {
-        targetLayers = layers;
+        targetLayers      = layers;
+        actualDamage      = damage       * efficiency;
+        actualStunDuration = stunDuration * efficiency;
 
         Vector3 dir = Vector3.right * directionX;
 
-        // Prefab con Z = 90 → eje largo = UP
         transform.up = dir;
 
-        // Mover para que empiece desde el jugador
         float halfLength = transform.localScale.y * 0.5f;
         transform.position += dir * halfLength;
 
@@ -33,7 +36,7 @@ public class RayoMortalProjectile : MonoBehaviour
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
         if (target == null) return;
 
-        target.ApplyDamage(damage);
-        target.ApplyStun(stunDuration);
+        target.ApplyDamage(actualDamage);
+        target.ApplyStun(actualStunDuration);
     }
 }

@@ -12,15 +12,19 @@ public class ExplosionArea : MonoBehaviour
 
     private LayerMask targetLayers;
 
-    public void Initialize(int facingDirection, LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño e impulso.</param>
+    public void Initialize(int facingDirection, LayerMask layers, float efficiency = 1f)
     {
         targetLayers = layers;
         SpawnVFX();
-        Explode();
+        Explode(efficiency);
     }
 
-    private void Explode()
+    private void Explode(float efficiency)
     {
+        float actualDamage    = damage    * efficiency;
+        float actualPushForce = pushForce * efficiency;
+
         Collider[] hits = Physics.OverlapSphere(transform.position, radius, targetLayers);
 
         foreach (Collider hit in hits)
@@ -28,11 +32,11 @@ public class ExplosionArea : MonoBehaviour
             IAbilityTarget target = hit.GetComponent<IAbilityTarget>();
             if (target == null) continue;
 
-            target.ApplyDamage(damage);
+            target.ApplyDamage(actualDamage);
 
-            float deltaX     = hit.transform.position.x - transform.position.x;
-            int   pushDir    = deltaX >= 0f ? 1 : -1;
-            target.ApplyImpulse(pushDir * pushForce);
+            float deltaX  = hit.transform.position.x - transform.position.x;
+            int   pushDir = deltaX >= 0f ? 1 : -1;
+            target.ApplyImpulse(pushDir * actualPushForce);
         }
 
         Destroy(gameObject);

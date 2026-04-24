@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fda4d68b95b4a829f035d48742f3fe9, type: 3}
+  m_Name: ElMuro
+  m_EditorClassIdentifier: 
+  abilityName: El Muro
+  description: 
+  element: 1
+  icon: {fileID: 21300000, guid: 97b6028de637b3e48837c6ef317969b7, type: 3}
+  cooldown: 5
+  minRange: 0
+  maxRange: 8
+  aiPriority: 1
+  animationStateName: Earth1
+  activationDelay: 1
+  totalAnimationDuration: 2.43
+  activationSound: {fileID: 0}
+  wallPrefab: {fileID: 4289734035827943042, guid: 78acd3e6fa86bf447aa0d27d14a5f822, type: 3}
+  spawnDistance: 2
+  spawnOffset: -0.3

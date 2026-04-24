@@ -13,12 +13,25 @@ public class WaterWaveProjectile : MonoBehaviour
     [SerializeField] private float damage         = 10f;
 
     private LayerMask targetLayers;
-    private int directionX;
+    private int       directionX;
+    private float     actualPushForce;
+    private float     actualSlowDuration;
+    private float     actualSlowMultiplier;
+    private float     actualDamage;
 
-    public void Initialize(int dirX, LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño, impulso y slow.</param>
+    public void Initialize(int dirX, LayerMask layers, float efficiency = 1f)
     {
-        directionX   = dirX;
-        targetLayers = layers;
+        directionX          = dirX;
+        targetLayers        = layers;
+
+        actualDamage        = damage       * efficiency;
+        actualPushForce     = pushForce    * efficiency;
+        actualSlowDuration  = slowDuration * efficiency;
+        // El multiplier de slow funciona al revés (menor = más lento);
+        // con baja efficiency lo hacemos menos efectivo: acercamos a 1.
+        actualSlowMultiplier = Mathf.Lerp(1f, slowMultiplier, efficiency);
+
         Destroy(gameObject, lifetime);
     }
 
@@ -35,9 +48,9 @@ public class WaterWaveProjectile : MonoBehaviour
         IAbilityTarget target = other.GetComponent<IAbilityTarget>();
         if (target != null)
         {
-            target.ApplyImpulse(directionX * pushForce);
-            target.ApplySlow(slowMultiplier, slowDuration);
-            target.ApplyDamage(damage);
+            target.ApplyImpulse(directionX * actualPushForce);
+            target.ApplySlow(actualSlowMultiplier, actualSlowDuration);
+            target.ApplyDamage(actualDamage);
         }
     }
 }

@@ -14,8 +14,9 @@ public class TrampaVolcanicaArea : MonoBehaviour
     [SerializeField] private float spawnDepth     = -1.2f;
     [SerializeField] private float finalScale     = 1f;
 
-    private LayerMask targetLayers;
-    private bool initialized;
+    private LayerMask  targetLayers;
+    private bool       initialized;
+    private float      actualDamagePerSecond;
 
     private class TargetData
     {
@@ -25,17 +26,15 @@ public class TrampaVolcanicaArea : MonoBehaviour
 
     private Dictionary<IAbilityTarget, TargetData> targets = new();
 
-    private bool   trapActive;
+    private bool    trapActive;
     private Vector3 startPosition;
 
-    /// <summary>
-    /// Llamado desde la ability inmediatamente tras Instantiate (antes de Start).
-    /// Awake ya habrá corrido, Start aún no.
-    /// </summary>
-    public void Initialize(LayerMask layers)
+    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño por segundo.</param>
+    public void Initialize(LayerMask layers, float efficiency = 1f)
     {
-        targetLayers = layers;
-        initialized  = true;
+        targetLayers          = layers;
+        actualDamagePerSecond = damagePerSecond * efficiency;
+        initialized           = true;
     }
 
     private void Start()
@@ -62,8 +61,7 @@ public class TrampaVolcanicaArea : MonoBehaviour
             transform.localScale = Vector3.Lerp(startScale, endScale, t);
             transform.position   = Vector3.Lerp(
                 startPosition + Vector3.up * spawnDepth,
-                targetPosition,
-                t
+                targetPosition, t
             );
 
             time += Time.deltaTime;
@@ -99,7 +97,7 @@ public class TrampaVolcanicaArea : MonoBehaviour
             }
             else
             {
-                pair.Key.ApplyDamage(damagePerSecond * delta);
+                pair.Key.ApplyDamage(actualDamagePerSecond * delta);
             }
         }
     }
