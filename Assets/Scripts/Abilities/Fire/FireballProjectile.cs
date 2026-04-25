@@ -1,6 +1,10 @@
 using UnityEngine;
 
-public class FireballProjectile : MonoBehaviour, IReversible
+// ──────────────────────────────────────────────────────────────────────────────
+// Bola de Fuego — proyectil que aplica daño de impacto + quemadura.
+// Hereda de ProjectileBase para la detección automática de obstáculos.
+// ──────────────────────────────────────────────────────────────────────────────
+public class FireballProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
     [SerializeField] private float speed    = 14f;
@@ -11,20 +15,20 @@ public class FireballProjectile : MonoBehaviour, IReversible
     [SerializeField] private float burnDamagePerSecond = 2f;
     [SerializeField] private float burnDuration        = 3f;
 
-    private LayerMask targetLayers;
-    private int       directionX;
-    private float     lifeTimer;
+    private int   directionX;
+    private float lifeTimer;
 
-    // Valores reales aplicados tras escalar por efficiency
     private float actualImpactDamage;
     private float actualBurnDps;
     private float actualBurnDuration;
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño y duración de quemadura.</param>
     public void Initialize(int dirX, LayerMask layers, float efficiency = 1f)
     {
         directionX   = dirX;
-        targetLayers = layers;
+        targetLayers = layers;  // asignado en ProjectileBase
 
         actualImpactDamage = impactDamage        * efficiency;
         actualBurnDps      = burnDamagePerSecond * efficiency;
@@ -40,20 +44,28 @@ public class FireballProjectile : MonoBehaviour, IReversible
             Destroy(gameObject);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if ((targetLayers.value & (1 << other.gameObject.layer)) == 0)
-            return;
+    // ─────────────────────────────────────────────────────────────────────────
+    // ProjectileBase — template methods
+    // ─────────────────────────────────────────────────────────────────────────
 
-        IAbilityTarget target = other.GetComponent<IAbilityTarget>();
-        if (target != null)
+    protected override void OnTargetHit(Collider target)
+    {
+        IAbilityTarget abilityTarget = target.GetComponent<IAbilityTarget>();
+        if (abilityTarget != null)
         {
-            target.ApplyDamage(actualImpactDamage);
-            target.ApplyBurn(actualBurnDps, actualBurnDuration);
+            abilityTarget.ApplyDamage(actualImpactDamage);
+            abilityTarget.ApplyBurn(actualBurnDps, actualBurnDuration);
         }
 
         Destroy(gameObject);
     }
+
+    // OnObstacleHit() usa la implementación por defecto: Destroy(gameObject).
+    // Si quieres añadir VFX de impacto en pared, haz override aquí.
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // IReversible
+    // ─────────────────────────────────────────────────────────────────────────
 
     public void ReverseDirection()
     {

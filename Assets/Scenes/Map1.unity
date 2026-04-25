@@ -5453,8 +5453,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 6
   sprintMultiplier: 5
-  jumpForce: 8
-  gravity: -20
+  jumpForce: 9
+  gravity: -27
   impulseDecay: 30
   slowRecoverySpeed: 2
   moveAction: {fileID: 2505815618367517710, guid: f4db7ac4a61d3c045aec018be8f228ee, type: 3}
@@ -5465,6 +5465,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   abilityAnimationCrossFade: 0.1
+  characterController: {fileID: 0}
+  animator: {fileID: 0}
 --- !u!143 &1034145120
 CharacterController:
   m_ObjectHideFlags: 0
@@ -5603,10 +5605,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dashSpeed: 14
-  dashDuration: 0.6
+  dashDuration: 1
   airBallPrefab: {fileID: 7314526620251459061, guid: 24a83a67ba722f44dad0eb64b2c042eb, type: 3}
   airBallY: 0.5
-  playerYOnBall: 1.5
+  playerYOnBall: 0.9
+  mountDuration: 0.15
 --- !u!114 &1034145124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11131,6 +11134,7 @@ GameObject:
   - component: {fileID: 1034145121}
   - component: {fileID: 5866666021013909709}
   - component: {fileID: 5866666021013909710}
+  - component: {fileID: 5866666021013909711}
   m_Layer: 13
   m_Name: Player
   m_TagString: Player
@@ -11633,6 +11637,21 @@ MonoBehaviour:
   punchSound: {fileID: 11400000, guid: 66f2d253680e5aa479ba5dfc6bcefd9d, type: 2}
   landSound: {fileID: 11400000, guid: f1bb646fe29f1c84aaefcf7a9526145d, type: 2}
   jumpSound: {fileID: 11400000, guid: f1bb646fe29f1c84aaefcf7a9526145d, type: 2}
+--- !u!114 &5866666021013909711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132148981493772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1933cb75d5a1d5a45ac735ac6c7325ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damageMultiplier: 0.75
+  moveSpeedMultiplier: 0.5
+  <IsBlocking>k__BackingField: 0
 --- !u!224 &5922945189548927615
 RectTransform:
   m_ObjectHideFlags: 0

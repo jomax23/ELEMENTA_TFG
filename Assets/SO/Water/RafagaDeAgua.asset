@@ -21,9 +21,9 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Water2
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 1
+  totalAnimationDuration: 2
   activationSound: {fileID: 0}
   projectilePrefab: {fileID: 994275371397674478, guid: 57adfae32a722124c982772dabb10850, type: 3}
-  projectileCount: 3
-  timeBetweenShots: 0.5
+  projectileCount: 5
+  timeBetweenShots: 0.1

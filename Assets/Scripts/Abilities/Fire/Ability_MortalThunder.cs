@@ -27,7 +27,7 @@ public class Ability_MortalThunder : AbilityData
             return;
         }
 
-        RayoMortalProjectile beam = Instantiate(beamPrefab, spawnPoint.position, Quaternion.identity);
+        RayoMortalProjectile beam = Instantiate(beamPrefab, spawnPoint.position, Quaternion.Euler(0f, 0f, 0f));
         beam.Initialize(user.FacingDirection, user.TargetLayers, efficiency);
     }
 }

@@ -21,9 +21,9 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Air2
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 0.6
+  totalAnimationDuration: 1.5
   activationSound: {fileID: 0}
   tornadoPrefab: {fileID: 3406735740084466992, guid: 877d782ddcab8d747814fbe1b8927d4d, type: 3}
-  spawnOffsetX: 1.5
+  spawnOffsetX: 1.75
   spawnOffsetY: 0

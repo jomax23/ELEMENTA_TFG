@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Fire3
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 0.15
+  totalAnimationDuration: 2.1
   activationSound: {fileID: 0}
   airBeamPrefab: {fileID: 7416166309540247779, guid: 69ec03dd24db84245a7b993db4f02872, type: 3}
   airBeamDuration: 1

@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Earth3
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 1.2
+  totalAnimationDuration: 2.1
   activationSound: {fileID: 0}
   absorptionAmount: 50
   speedMultiplier: 0.5

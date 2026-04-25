@@ -9,12 +9,12 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed       = 6f;
+    [SerializeField] private float moveSpeed        = 6f;
     [SerializeField] private float sprintMultiplier = 100f;
-    [SerializeField] private float jumpForce       = 8f;
-    [SerializeField] private float gravity         = -20f;
-    private bool gravityEnabled            = true;
-    private bool horizontalMovementEnabled = true;
+    [SerializeField] private float jumpForce        = 8f;
+    [SerializeField] private float gravity          = -20f;
+    private bool  gravityEnabled            = true;
+    private bool  horizontalMovementEnabled = true;
     private float fixedZ;
     public bool IsGrounded => characterController.isGrounded;
 
@@ -27,6 +27,10 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     private float burnDps;
     private PlayerArmor armor;
     private float armorSpeedMultiplier = 1f;
+
+    // Flags de estados especiales
+    private bool isFlying;
+    private bool isDashing;
 
     [Header("Input")]
     [SerializeField] private InputActionReference moveAction;
@@ -44,15 +48,14 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     public int       FacingDirection { get; private set; } = 1;
     public LayerMask TargetLayers    => targetLayers;
     public void RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
-    // ─────────────────────────────────────────────────────────────────────────
 
     public event Action OnStunApplied;
     public bool IsUsingAbility { get; private set; }
 
-    private CharacterController characterController;
-    private Animator             animator;
+    public CharacterController characterController;
+    public Animator             animator;
     private Health               health;
-    private PlayerAudioController audioController;   // ← NUEVO
+    private PlayerAudioController audioController;
 
     private Vector3 movement;
     private float   verticalVelocity;
@@ -60,11 +63,13 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     private float   slowMultiplier = 1f;
     private float   slowTimer;
 
-    private static readonly int AnimIsMoving    = Animator.StringToHash("IsMoving");
-    private static readonly int AnimIsSprinting = Animator.StringToHash("IsSprinting");
-    private static readonly int AnimIsGrounded  = Animator.StringToHash("IsGrounded");
-    private static readonly int AnimPunch       = Animator.StringToHash("Punch");
-    private static readonly int AnimIsStunned   = Animator.StringToHash("IsStunned");
+    public readonly int AnimIsMoving    = Animator.StringToHash("IsMoving");
+    public readonly int AnimIsSprinting = Animator.StringToHash("IsSprinting");
+    public readonly int AnimIsGrounded  = Animator.StringToHash("IsGrounded");
+    public readonly int AnimPunch       = Animator.StringToHash("Punch");
+    public readonly int AnimIsStunned   = Animator.StringToHash("IsStunned");
+    public readonly int AnimIsFlying    = Animator.StringToHash("IsFlying");
+    public readonly int AnimIsDashing   = Animator.StringToHash("IsDashing");
 
     private void Awake()
     {
@@ -73,7 +78,7 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         health              = GetComponent<Health>();
         fixedZ              = transform.position.z;
         armor               = GetComponent<PlayerArmor>();
-        audioController     = GetComponent<PlayerAudioController>();   // ← NUEVO
+        audioController     = GetComponent<PlayerAudioController>();
     }
 
     private void OnEnable()
@@ -152,6 +157,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
 
     private void HandleJump()
     {
+        if (isFlying || isDashing) return;
+
         if (characterController.isGrounded)
         {
             if (verticalVelocity < 0f)
@@ -160,7 +167,7 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
             if (!IsUsingAbility && !isStunned && jumpAction.action.WasPressedThisFrame())
             {
                 verticalVelocity = jumpForce;
-                audioController?.PlayJump();   // ← SFX de salto
+                audioController?.PlayJump();
             }
         }
         else
@@ -176,11 +183,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     private void HandlePunch()
     {
         if (IsUsingAbility || isStunned) return;
-
         if (punchAction.action.WasPressedThisFrame())
             animator.SetTrigger(AnimPunch);
-            // Nota: el SFX del puñetazo se dispara desde Animation Event (OnPunch)
-            // en el frame de impacto del clip, no aquí.
     }
 
     // =========================
@@ -190,7 +194,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     public void PlayAbilityAnimation(string stateName)
     {
         if (string.IsNullOrEmpty(stateName)) return;
-
         IsUsingAbility = true;
         animator.CrossFade(stateName, abilityAnimationCrossFade);
     }
@@ -203,6 +206,29 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     private void UpdateAnimator(float input, float inputSprint)
     {
         animator.SetBool(AnimIsStunned, isStunned);
+
+        if (isFlying)
+        {
+            animator.SetBool(AnimIsFlying,    true);
+            animator.SetBool(AnimIsDashing,   false);
+            animator.SetBool(AnimIsGrounded,  false);
+            animator.SetBool(AnimIsMoving,    false);
+            animator.SetBool(AnimIsSprinting, false);
+            return;
+        }
+
+        if (isDashing)
+        {
+            animator.SetBool(AnimIsDashing,   true);
+            animator.SetBool(AnimIsFlying,    false);
+            animator.SetBool(AnimIsGrounded,  false);
+            animator.SetBool(AnimIsMoving,    false);
+            animator.SetBool(AnimIsSprinting, false);
+            return;
+        }
+
+        animator.SetBool(AnimIsFlying,  false);
+        animator.SetBool(AnimIsDashing, false);
 
         if (IsUsingAbility || isStunned) return;
 
@@ -264,10 +290,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     public void ApplyStun(float duration)
     {
         if (armor != null && armor.IsActive) return;
-
         isStunned = true;
         stunTimer = duration;
-
         OnStunApplied?.Invoke();
     }
 
@@ -276,7 +300,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         float finalDamage = armor != null && armor.IsActive
             ? armor.AbsorbDamage(damage)
             : damage;
-
         health.TakeDamage(finalDamage);
     }
 
@@ -291,8 +314,22 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     // EXTERNAL CONTROL
     // =========================
 
-    public void SetGravityEnabled(bool enabled)            => gravityEnabled = enabled;
-    public void SetArmorSpeedMultiplier(float multiplier)  => armorSpeedMultiplier = multiplier;
+    public void SetGravityEnabled(bool enabled)           => gravityEnabled = enabled;
+    public void SetArmorSpeedMultiplier(float multiplier) => armorSpeedMultiplier = multiplier;
+
+    public void SetFlying(bool flying)
+    {
+        isFlying = flying;
+        if (!flying) verticalVelocity = 0f;
+    }
+
+    public void SetDashing(bool dashing)
+    {
+        isDashing = dashing;
+        // Resetear siempre: al iniciar evita caída por velocidad acumulada,
+        // al terminar evita rebote brusco al recuperar gravedad.
+        verticalVelocity = 0f;
+    }
 
     public void SetHorizontalMovementEnabled(bool enabled)
     {

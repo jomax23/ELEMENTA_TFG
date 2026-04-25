@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Earth2
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 1.06
+  totalAnimationDuration: 1.8
   activationSound: {fileID: 0}
   areaPrefab: {fileID: 889066823660661820, guid: 8b554de1d6849ad44ba50763ee034332, type: 3}
   spawnOffset: 0

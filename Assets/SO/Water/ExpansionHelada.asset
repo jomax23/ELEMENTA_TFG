@@ -21,9 +21,9 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Water3
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 1.3
+  totalAnimationDuration: 2.33
   activationSound: {fileID: 0}
   areaPrefab: {fileID: 1881512162759972329, guid: b23a29e190539fe428c9a4eee1b644ff, type: 3}
-  spawnDistance: 0
+  spawnDistance: 1.75
   spawnOffset: 0

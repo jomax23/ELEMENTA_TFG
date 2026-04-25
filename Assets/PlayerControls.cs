@@ -244,6 +244,15 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Block"",
+                    ""type"": ""Button"",
+                    ""id"": ""9a2588df-c5bb-400c-81cd-ed5ed6e29971"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -488,6 +497,17 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""action"": ""AbilitiesMenu"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""65072805-a179-4864-a90c-7aeb924978e6"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Block"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -513,6 +533,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_Gameplay_NextElement = m_Gameplay.FindAction("NextElement", throwIfNotFound: true);
         m_Gameplay_ChangeElement = m_Gameplay.FindAction("ChangeElement", throwIfNotFound: true);
         m_Gameplay_AbilitiesMenu = m_Gameplay.FindAction("AbilitiesMenu", throwIfNotFound: true);
+        m_Gameplay_Block = m_Gameplay.FindAction("Block", throwIfNotFound: true);
     }
 
     ~@PlayerControls()
@@ -610,6 +631,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_NextElement;
     private readonly InputAction m_Gameplay_ChangeElement;
     private readonly InputAction m_Gameplay_AbilitiesMenu;
+    private readonly InputAction m_Gameplay_Block;
     /// <summary>
     /// Provides access to input actions defined in input action map "Gameplay".
     /// </summary>
@@ -690,6 +712,10 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @AbilitiesMenu => m_Wrapper.m_Gameplay_AbilitiesMenu;
         /// <summary>
+        /// Provides access to the underlying input action "Gameplay/Block".
+        /// </summary>
+        public InputAction @Block => m_Wrapper.m_Gameplay_Block;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
@@ -766,6 +792,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @AbilitiesMenu.started += instance.OnAbilitiesMenu;
             @AbilitiesMenu.performed += instance.OnAbilitiesMenu;
             @AbilitiesMenu.canceled += instance.OnAbilitiesMenu;
+            @Block.started += instance.OnBlock;
+            @Block.performed += instance.OnBlock;
+            @Block.canceled += instance.OnBlock;
         }
 
         /// <summary>
@@ -828,6 +857,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @AbilitiesMenu.started -= instance.OnAbilitiesMenu;
             @AbilitiesMenu.performed -= instance.OnAbilitiesMenu;
             @AbilitiesMenu.canceled -= instance.OnAbilitiesMenu;
+            @Block.started -= instance.OnBlock;
+            @Block.performed -= instance.OnBlock;
+            @Block.canceled -= instance.OnBlock;
         }
 
         /// <summary>
@@ -987,5 +1019,12 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAbilitiesMenu(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Block" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnBlock(InputAction.CallbackContext context);
     }
 }

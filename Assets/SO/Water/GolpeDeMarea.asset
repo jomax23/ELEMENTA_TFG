@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Water1
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 1
+  totalAnimationDuration: 2
   activationSound: {fileID: 0}
   wavePrefab: {fileID: -8540998114614274175, guid: 11e47b6a0efd59646b77b203c3a87999, type: 3}
   spawnOffset: 1.5

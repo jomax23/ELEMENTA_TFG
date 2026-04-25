@@ -22,7 +22,7 @@ MonoBehaviour:
   aiPriority: 1
   animationStateName: Water4
   activationDelay: 0
-  totalAnimationDuration: 1
+  totalAnimationDuration: 3
   activationSound: {fileID: 0}
   totalHeal: 30
   duration: 3

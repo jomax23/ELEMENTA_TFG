@@ -45,12 +45,9 @@ public class PlayerFlight : MonoBehaviour
         flightTimer = duration;
 
         movement.SetGravityEnabled(false);
+        movement.SetFlying(true);       // bloquea Jump y fuerza animación Flying
     }
 
-    /// <summary>
-    /// Termina el vuelo inmediatamente.
-    /// Llamado tanto por el timer interno como por Cancel() ante una interrupción.
-    /// </summary>
     public void EndFlight()
     {
         if (!isFlying) return;
@@ -59,15 +56,14 @@ public class PlayerFlight : MonoBehaviour
         isLifting = false;
 
         movement.SetGravityEnabled(true);
+        movement.SetFlying(false);      // devuelve control normal al animator
     }
 
     private void Update()
     {
         if (!isFlying) return;
 
-        // =========================
-        // FASE 1: LIFT-OFF
-        // =========================
+        // ── FASE 1: LIFT-OFF ──────────────────────────────────────────────────
         if (isLifting)
         {
             liftTimer -= Time.deltaTime;
@@ -86,11 +82,8 @@ public class PlayerFlight : MonoBehaviour
             return;
         }
 
-        // =========================
-        // FASE 2: VUELO NORMAL
-        // =========================
+        // ── FASE 2: VUELO NORMAL ──────────────────────────────────────────────
         flightTimer -= Time.deltaTime;
-
         ApplyVerticalInput();
 
         if (flightTimer <= 0f)
@@ -100,7 +93,6 @@ public class PlayerFlight : MonoBehaviour
     private void ApplyVerticalInput()
     {
         if (verticalMoveAction == null) return;
-
         float input = verticalMoveAction.action.ReadValue<float>();
         controller.Move(Vector3.up * input * verticalSpeed * Time.deltaTime);
     }

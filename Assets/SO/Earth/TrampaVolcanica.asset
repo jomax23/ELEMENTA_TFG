@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Earth4
-  activationDelay: 0
-  totalAnimationDuration: 1
+  activationDelay: 1.4
+  totalAnimationDuration: 2.66
   activationSound: {fileID: 0}
   trapPrefab: {fileID: 7050849497990865498, guid: fb6bb6d85cbfefd49b6532f6b55f42e6, type: 3}
   spawnOffsetX: 1.5

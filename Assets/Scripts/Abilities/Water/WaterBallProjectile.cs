@@ -1,6 +1,10 @@
 using UnityEngine;
 
-public class WaterBallProjectile : MonoBehaviour, IReversible
+// ──────────────────────────────────────────────────────────────────────────────
+// Ráfaga de Agua — proyectil que aplica impulso + daño.
+// Hereda de ProjectileBase para la detección automática de obstáculos.
+// ──────────────────────────────────────────────────────────────────────────────
+public class WaterBallProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
     [SerializeField] private float speed    = 12f;
@@ -10,16 +14,18 @@ public class WaterBallProjectile : MonoBehaviour, IReversible
     [SerializeField] private float pushForce = 6f;
     [SerializeField] private float damage    = 10f;
 
-    private LayerMask targetLayers;
-    private float     directionX;
-    private float     actualPushForce;
-    private float     actualDamage;
+    private float directionX;
+    private float actualPushForce;
+    private float actualDamage;
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño e impulso.</param>
     public void Initialize(float dirX, LayerMask layers, float efficiency = 1f)
     {
-        directionX     = Mathf.Sign(dirX);
-        targetLayers   = layers;
+        directionX    = Mathf.Sign(dirX);
+        targetLayers  = layers; // asignado en ProjectileBase
+
         actualPushForce = pushForce * efficiency;
         actualDamage    = damage    * efficiency;
 
@@ -31,20 +37,25 @@ public class WaterBallProjectile : MonoBehaviour, IReversible
         transform.position += Vector3.right * directionX * speed * Time.deltaTime;
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if ((targetLayers.value & (1 << other.gameObject.layer)) == 0)
-            return;
+    // ─────────────────────────────────────────────────────────────────────────
+    // ProjectileBase — template methods
+    // ─────────────────────────────────────────────────────────────────────────
 
-        IAbilityTarget target = other.GetComponent<IAbilityTarget>();
-        if (target != null)
+    protected override void OnTargetHit(Collider target)
+    {
+        IAbilityTarget abilityTarget = target.GetComponent<IAbilityTarget>();
+        if (abilityTarget != null)
         {
-            target.ApplyImpulse(directionX * actualPushForce);
-            target.ApplyDamage(actualDamage);
+            abilityTarget.ApplyImpulse(directionX * actualPushForce);
+            abilityTarget.ApplyDamage(actualDamage);
         }
 
         Destroy(gameObject);
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // IReversible
+    // ─────────────────────────────────────────────────────────────────────────
 
     public void ReverseDirection()
     {

@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRange: 8
   aiPriority: 1
   animationStateName: Earth1
-  activationDelay: 1
-  totalAnimationDuration: 2.43
+  activationDelay: 0.93
+  totalAnimationDuration: 1.8
   activationSound: {fileID: 0}
   wallPrefab: {fileID: 4289734035827943042, guid: 78acd3e6fa86bf447aa0d27d14a5f822, type: 3}
   spawnDistance: 2

@@ -124,13 +124,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdbe3b55517cae741a8b7252bce09880, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 60
-  lifetime: 0.4
   damage: 20
   stunDuration: 2
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 1024
+  lifetime: 0.4
 --- !u!1001 &1652486892606230712
 PrefabInstance:
   m_ObjectHideFlags: 0

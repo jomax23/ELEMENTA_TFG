@@ -20,7 +20,7 @@ MonoBehaviour:
   minRange: 0
   maxRange: 8
   aiPriority: 1
-  animationStateName: Air1
+  animationStateName: 
   activationDelay: 0
-  totalAnimationDuration: 1
+  totalAnimationDuration: 0
   activationSound: {fileID: 0}
