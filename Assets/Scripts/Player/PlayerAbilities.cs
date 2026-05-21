@@ -5,14 +5,21 @@ using System.Collections.Generic;
 
 public class PlayerAbilities : MonoBehaviour
 {
+    // ── Componentes ───────────────────────────────────────────────────────────
+    private PlayerMovement playerMovement;
+
+    // ── Elemento ──────────────────────────────────────────────────────────────
     [Header("Element")]
     [SerializeField] private ElementType currentElement;
     public ElementType CurrentElement => currentElement;
+    private ElementType  mainElement;
 
-    [Header("Abilities")]
+    // ── HUD ───────────────────────────────────────────────────────────────────
+    [Header("HUD")]
     [SerializeField] private AbilitiesHUD abilitiesHUD;
     [SerializeField] private AffinityHUD  affinityHUD;
 
+    // ── Input ─────────────────────────────────────────────────────────────────
     [Header("Input")]
     [SerializeField] private InputActionReference ability1Action;
     [SerializeField] private InputActionReference ability2Action;
@@ -20,33 +27,31 @@ public class PlayerAbilities : MonoBehaviour
     [SerializeField] private InputActionReference ability4Action;
     [SerializeField] private InputActionReference changeElementScrollAction;
 
+    // ── Sets de habilidades ───────────────────────────────────────────────────
     [Header("Element Ability Sets")]
     [SerializeField] private ElementAbilitySet[] elementAbilitySets;
-
-    [Header("Scroll")]
-    [SerializeField] private float scrollCooldown = 0.15f;
-
-    // ── Referencias ────────────────────────────────────────────────────────────
-    private PlayerMovement playerMovement;
-
     private AbilityData currentAbility1;
     private AbilityData currentAbility2;
     private AbilityData currentAbility3;
     private AbilityData currentAbility4;
 
+    // ── Cooldowns ─────────────────────────────────────────────────────────────
     private Dictionary<AbilityData, float> cooldownTimers = new();
+    private AbilityData[] cooldownKeys; // cache para evitar alloc por frame
 
-    // Cache para evitar alloc por frame en UpdateCooldowns
-    private AbilityData[] cooldownKeys;
-
-    private float scrollTimer;
-
+    // ── Habilidad activa ──────────────────────────────────────────────────────
     private Coroutine   activeAbilityCoroutine;
     private AbilityData activeAbility;
 
-    private ElementType  mainElement;
+    // ── Afinidad ──────────────────────────────────────────────────────────────
     private AffinityData affinityData;
 
+    // ── Scroll de elemento ────────────────────────────────────────────────────
+    [Header("Scroll")]
+    [SerializeField] private float scrollCooldown = 0.15f;
+    private float scrollTimer;
+    
+    
     // =========================
     // INIT
     // =========================

@@ -3,31 +3,32 @@ using UnityEngine;
 
 public class PlayerArmor : MonoBehaviour
 {
-    [Header("Armor Mesh")]
-    [SerializeField] private GameObject armorMesh;
-    
-    private PlayerMovement movement;
+    [Header("Material Swap")]
+    [SerializeField] private Renderer characterRenderer;
+    [SerializeField] private Material armorMaterial;
 
-    
-    /// <summary>Notifica cuando la armadura se rompe.</summary>
+    // Runtime
+    private IArmorUser armorUser;  // ← Interface en vez de PlayerMovement
+    private Material[] originalMaterials;
+
     public event Action OnArmorBroken;
-
     public bool IsActive { get; private set; }
 
     private float maxAbsorption;
     private float remainingAbsorption;
 
-    
     private void Awake()
     {
-        movement = GetComponent<PlayerMovement>();
+        // ← Busca cualquier componente que implemente IArmorUser
+        armorUser = GetComponent<IArmorUser>();
+        
+        if (armorUser == null)
+            Debug.LogWarning("[PlayerArmor] No se encontró IArmorUser en este GameObject.", this);
+
+        if (characterRenderer != null)
+            originalMaterials = characterRenderer.sharedMaterials;
     }
-    
-    
-    /// <summary>
-    /// Activa la armadura. El mesh se habilita y los efectos
-    /// quedan interceptados hasta agotar la absorción.
-    /// </summary>
+
     public void Activate(float absorptionAmount, float speedMultiplier)
     {
         if (IsActive) return;
@@ -36,52 +37,55 @@ public class PlayerArmor : MonoBehaviour
         maxAbsorption       = absorptionAmount;
         remainingAbsorption = absorptionAmount;
 
-        if (armorMesh != null)
-            armorMesh.SetActive(true);
-        
-        movement?.SetArmorSpeedMultiplier(speedMultiplier);
+        ApplyArmorMaterial();
+        armorUser?.SetArmorSpeedMultiplier(speedMultiplier);  // ← Usar interface
     }
+
     public void Deactivate()
     {
         if (!IsActive) return;
-
-        Break(); // reutilizamos lógica existente
+        Break();
     }
-    /// <summary>
-    /// Procesa el daño entrante. Devuelve el daño real que debe
-    /// aplicarse al jugador tras la reducción de la armadura.
-    /// </summary>
+
     public float AbsorbDamage(float incomingDamage)
     {
         if (!IsActive) return incomingDamage;
 
-        float reducedDamage = incomingDamage * 0.5f;
+        float reducedDamage  = incomingDamage * 0.5f;
         remainingAbsorption -= reducedDamage;
 
         if (remainingAbsorption <= 0f)
         {
             Break();
-            // El exceso de daño (si lo hay) se aplica igualmente
             return Mathf.Abs(remainingAbsorption);
         }
 
         return reducedDamage;
     }
 
+    private void ApplyArmorMaterial()
+    {
+        if (characterRenderer == null || armorMaterial == null) return;
+
+        int count = characterRenderer.sharedMaterials.Length;
+        var matArray = new Material[count];
+        for (int i = 0; i < count; i++) matArray[i] = armorMaterial;
+        characterRenderer.materials = matArray;
+    }
+
+    private void RestoreOriginalMaterials()
+    {
+        if (characterRenderer == null || originalMaterials == null) return;
+        characterRenderer.materials = originalMaterials;
+    }
+
     private void Break()
     {
         IsActive = false;
-
-        if (armorMesh != null)
-            armorMesh.SetActive(false);
-
-        movement?.SetArmorSpeedMultiplier(1f);
-
+        RestoreOriginalMaterials();
+        armorUser?.SetArmorSpeedMultiplier(1f);  // ← Usar interface
         OnArmorBroken?.Invoke();
     }
 
-    private void OnDestroy()
-    {
-        OnArmorBroken = null;
-    }
+    private void OnDestroy() => OnArmorBroken = null;
 }

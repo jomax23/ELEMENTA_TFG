@@ -6,71 +6,82 @@ using System.Collections;
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Health))]
-public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
+public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmorUser
 {
+    // ── Componentes ───────────────────────────────────────────────────────────
+    public  CharacterController   characterController;
+    public  Animator              animator;
+    private Health                health;
+    private PlayerArmor           armor;
+    private PlayerAudioController audioController;
+    private DamageFlash           hitFlash;
+    
+    // ── Movimiento ────────────────────────────────────────────────────────────
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed        = 6f;
     [SerializeField] private float sprintMultiplier = 100f;
     [SerializeField] private float jumpForce        = 8f;
     [SerializeField] private float gravity          = -20f;
+    private float fixedZ;
+    
+    // ── Estados especiales ────────────────────────────────────────────────────
     private bool  gravityEnabled            = true;
     private bool  horizontalMovementEnabled = true;
-    private float fixedZ;
-    public bool IsGrounded => characterController.isGrounded;
-
+    private bool  isFlying;
+    private bool  isDashing;
+    private float armorSpeedMultiplier = 1f;
+    
+    // ── Efectos externos ──────────────────────────────────────────────────────
     [Header("External Effects")]
     [SerializeField] private float impulseDecay      = 30f;
     [SerializeField] private float slowRecoverySpeed = 2f;
+    private float externalImpulse;
+    private float slowMultiplier = 1f;
+    private float slowTimer;
     private bool  isStunned;
     private float stunTimer;
-    private float burnTimer;
     private float burnDps;
-    private PlayerArmor armor;
-    private float armorSpeedMultiplier = 1f;
-
-    // Flags de estados especiales
-    private bool isFlying;
-    private bool isDashing;
-
+    private float burnTimer;
+    
+    // ── Input ─────────────────────────────────────────────────────────────────
     [Header("Input")]
     [SerializeField] private InputActionReference moveAction;
     [SerializeField] private InputActionReference sprintAction;
     [SerializeField] private InputActionReference jumpAction;
     [SerializeField] private InputActionReference punchAction;
-
+    
+    // ── Combate ───────────────────────────────────────────────────────────────
     [Header("Combat")]
     [SerializeField] private LayerMask targetLayers;
-
+    [SerializeField] private PunchHitbox   punchHitbox;
+    [SerializeField] private float         punchTime;
+    
+    // ── Habilidades ───────────────────────────────────────────────────────────
     [Header("Ability Animation")]
     [SerializeField] private float abilityAnimationCrossFade = 0.1f;
-
+    
     // ── IAbilityUser ──────────────────────────────────────────────────────────
     public int       FacingDirection { get; private set; } = 1;
     public LayerMask TargetLayers    => targetLayers;
-    public void RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
-
+    public bool      IsUsingAbility  { get; private set; }
+    public bool      IsGrounded      => characterController.isGrounded;
+    public bool         IsStunned  => isStunned;
+    public void      RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
     public event Action OnStunApplied;
-    public bool IsUsingAbility { get; private set; }
-
-    public CharacterController characterController;
-    public Animator             animator;
-    private Health               health;
-    private PlayerAudioController audioController;
-
+    
+    // ── Runtime ───────────────────────────────────────────────────────────────
     private Vector3 movement;
     private float   verticalVelocity;
-    private float   externalImpulse;
-    private float   slowMultiplier = 1f;
-    private float   slowTimer;
-
+    
+    // ── Animator hashes ───────────────────────────────────────────────────────
     public readonly int AnimIsMoving    = Animator.StringToHash("IsMoving");
     public readonly int AnimIsSprinting = Animator.StringToHash("IsSprinting");
     public readonly int AnimIsGrounded  = Animator.StringToHash("IsGrounded");
-    public readonly int AnimPunch       = Animator.StringToHash("Punch");
     public readonly int AnimIsStunned   = Animator.StringToHash("IsStunned");
+    public readonly int AnimPunch       = Animator.StringToHash("Punch");
     public readonly int AnimIsFlying    = Animator.StringToHash("IsFlying");
     public readonly int AnimIsDashing   = Animator.StringToHash("IsDashing");
-
+    
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
@@ -78,26 +89,10 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         health              = GetComponent<Health>();
         fixedZ              = transform.position.z;
         armor               = GetComponent<PlayerArmor>();
+        hitFlash = GetComponent<DamageFlash>();
         audioController     = GetComponent<PlayerAudioController>();
     }
-
-    private void OnEnable()
-    {
-        moveAction.action.Enable();
-        sprintAction.action.Enable();
-        jumpAction.action.Enable();
-        punchAction.action.Enable();
-    }
-
-    private void OnDisable()
-    {
-        moveAction.action.Disable();
-        sprintAction.action.Disable();
-        jumpAction.action.Disable();
-        punchAction.action.Disable();
-        StopAllCoroutines();
-    }
-
+    
     private void Update()
     {
         float input       = moveAction.action.ReadValue<float>();
@@ -121,6 +116,23 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         transform.position = pos;
     }
 
+    private void OnEnable()
+    {
+        moveAction.action.Enable();
+        sprintAction.action.Enable();
+        jumpAction.action.Enable();
+        punchAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        moveAction.action.Disable();
+        sprintAction.action.Disable();
+        jumpAction.action.Disable();
+        punchAction.action.Disable();
+        StopAllCoroutines();
+    }
+
     // =========================
     // MOVEMENT
     // =========================
@@ -132,9 +144,7 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         float baseSpeed   = moveSpeed * slowMultiplier * armorSpeedMultiplier;
         float sprintSpeed = sprintMultiplier * inputSprint * slowMultiplier * armorSpeedMultiplier;
 
-        movement.x = canMove
-            ? input * (baseSpeed + sprintSpeed) + externalImpulse
-            : externalImpulse;
+        movement.x = canMove ? input * (baseSpeed + sprintSpeed) + externalImpulse : externalImpulse;
 
         movement.y = verticalVelocity;
         movement.z = 0f;
@@ -183,24 +193,38 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
     private void HandlePunch()
     {
         if (IsUsingAbility || isStunned) return;
+
         if (punchAction.action.WasPressedThisFrame())
-            animator.SetTrigger(AnimPunch);
+        {
+            StartCoroutine(PunchRoutine());
+        }
+    }
+    
+    private IEnumerator PunchRoutine()
+    {
+        IsUsingAbility = true;
+
+        animator.SetTrigger(AnimPunch);
+
+        yield return new WaitForSeconds(punchTime);
+
+        IsUsingAbility = false;
     }
 
     // =========================
     // ANIMATIONS
     // =========================
-
+    
+    public void CancelAbilityAnimation()
+    {
+        IsUsingAbility = false;
+    }
+    
     public void PlayAbilityAnimation(string stateName)
     {
         if (string.IsNullOrEmpty(stateName)) return;
         IsUsingAbility = true;
         animator.CrossFade(stateName, abilityAnimationCrossFade);
-    }
-
-    public void CancelAbilityAnimation()
-    {
-        IsUsingAbility = false;
     }
 
     private void UpdateAnimator(float input, float inputSprint)
@@ -295,12 +319,19 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser
         OnStunApplied?.Invoke();
     }
 
-    public void ApplyDamage(float damage)
+    public void ApplyDamage(float damage, DamageType type = DamageType.Generic)
     {
         float finalDamage = armor != null && armor.IsActive
             ? armor.AbsorbDamage(damage)
             : damage;
+
         health.TakeDamage(finalDamage);
+
+        if (type == DamageType.Punch)
+        {
+            hitFlash?.TriggerFlash();
+            HitStop.Trigger(0.05f);
+        }
     }
 
     public void ApplyBurn(float damagePerSecond, float duration)

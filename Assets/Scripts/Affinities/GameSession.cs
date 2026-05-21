@@ -8,6 +8,8 @@ public class GameSession : MonoBehaviour
     [SerializeField] private AffinityData affinityData;
 
     public ElementType MainElement   { get; private set; }
+    public ElementType EnemyElement { get; private set; }
+    
     public AffinityData AffinityData => affinityData;
     public bool HasChosenElement     { get; private set; }
 
@@ -36,6 +38,12 @@ public class GameSession : MonoBehaviour
         Debug.Log($"[GameSession] Elemento principal: {element}");
     }
 
+    public void SetEnemyElement(ElementType element)
+    {
+        EnemyElement = element;
+        Debug.Log($"[GameSession] Elemento enemigo: {element}");
+    }
+    
     public int GetAvailableAbilityCount(ElementType element)
     {
         if (affinityData == null) return 4;

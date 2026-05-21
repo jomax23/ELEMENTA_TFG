@@ -1,10 +1,7 @@
 using UnityEngine;
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Golpe de Marea — proyectil que atraviesa targets (aplica efectos sin destruirse)
-// pero se detiene al golpear un obstáculo físico.
-// Hereda de ProjectileBase para la detección automática de obstáculos.
-// ──────────────────────────────────────────────────────────────────────────────
+// La ola NO se destruye al golpear targets — aplica efectos y continúa avanzando.
+// SÍ se detiene al golpear un obstáculo físico (pared, plataforma).
 public class WaterWaveProjectile : ProjectileBase
 {
     [Header("Movement")]
@@ -25,17 +22,14 @@ public class WaterWaveProjectile : ProjectileBase
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño, impulso y slow.</param>
     public void Initialize(int dirX, LayerMask layers, float efficiency = 1f)
     {
         directionX   = dirX;
-        targetLayers = layers; // asignado en ProjectileBase
+        targetLayers = layers;
 
         actualDamage         = damage       * efficiency;
         actualPushForce      = pushForce    * efficiency;
         actualSlowDuration   = slowDuration * efficiency;
-        // Slow multiplier funciona al revés: menor = más lento.
-        // Con baja efficiency, lo acercamos a 1 (menos penalización).
         actualSlowMultiplier = Mathf.Lerp(1f, slowMultiplier, efficiency);
 
         Destroy(gameObject, lifetime);
@@ -43,17 +37,14 @@ public class WaterWaveProjectile : ProjectileBase
 
     private void Update()
     {
-        transform.position += Vector3.right * directionX * speed * Time.deltaTime;
+        TryMove(Vector3.right * directionX, speed);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // ProjectileBase — template methods
+    // ProjectileBase
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// La ola NO se destruye al golpear a un target — aplica efectos y sigue avanzando.
-    /// Esto permite que una sola ola afecte a múltiples enemigos si los hay en línea.
-    /// </summary>
+    /// <summary>La ola NO se destruye al golpear un target — sigue avanzando.</summary>
     protected override void OnTargetHit(Collider target)
     {
         IAbilityTarget abilityTarget = target.GetComponent<IAbilityTarget>();
@@ -63,9 +54,8 @@ public class WaterWaveProjectile : ProjectileBase
             abilityTarget.ApplySlow(actualSlowMultiplier, actualSlowDuration);
             abilityTarget.ApplyDamage(actualDamage);
         }
-        // Sin Destroy: la ola continúa avanzando.
+        // Sin Destroy: la ola continúa.
     }
 
-    // OnObstacleHit() usa la implementación por defecto: Destroy(gameObject).
-    // La ola se detiene al chocar con una pared.
+    // OnObstacleHit() usa el default de ProjectileBase: Destroy(gameObject).
 }

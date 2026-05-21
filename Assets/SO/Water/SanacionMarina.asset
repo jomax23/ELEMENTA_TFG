@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: SanacionMarina
   m_EditorClassIdentifier: 
   abilityName: "Sanaci\xF3n Marina"
-  description: 
+  description: Canaliza el poder del agua para recuperar 30 puntos de vida de forma
+    gradual a lo largo de 3 segundos.
   element: 2
   icon: {fileID: 21300000, guid: fd15d62cb509bca4580266b422ca9780, type: 3}
   cooldown: 10
-  minRange: 0
-  maxRange: 8
-  aiPriority: 1
+  minRange: 5
+  maxRange: 30
+  aiPriority: 0.25
   animationStateName: Water4
   activationDelay: 0
   totalAnimationDuration: 3
-  activationSound: {fileID: 0}
+  activationSound: {fileID: 11400000, guid: f5d5a2b34fe0a81458d7c873eb24a0c3, type: 2}
   totalHeal: 30
   duration: 3
   healVfxPrefab: {fileID: 2039271681719962573, guid: e54dbde757599c6468872f3845354b5c, type: 3}

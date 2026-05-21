@@ -1,9 +1,5 @@
 using UnityEngine;
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Ráfaga de Agua — proyectil que aplica impulso + daño.
-// Hereda de ProjectileBase para la detección automática de obstáculos.
-// ──────────────────────────────────────────────────────────────────────────────
 public class WaterBallProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
@@ -20,11 +16,10 @@ public class WaterBallProjectile : ProjectileBase, IReversible
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño e impulso.</param>
     public void Initialize(float dirX, LayerMask layers, float efficiency = 1f)
     {
         directionX    = Mathf.Sign(dirX);
-        targetLayers  = layers; // asignado en ProjectileBase
+        targetLayers  = layers;
 
         actualPushForce = pushForce * efficiency;
         actualDamage    = damage    * efficiency;
@@ -34,11 +29,11 @@ public class WaterBallProjectile : ProjectileBase, IReversible
 
     private void Update()
     {
-        transform.position += Vector3.right * directionX * speed * Time.deltaTime;
+        TryMove(Vector3.right * directionX, speed);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // ProjectileBase — template methods
+    // ProjectileBase
     // ─────────────────────────────────────────────────────────────────────────
 
     protected override void OnTargetHit(Collider target)
@@ -49,7 +44,6 @@ public class WaterBallProjectile : ProjectileBase, IReversible
             abilityTarget.ApplyImpulse(directionX * actualPushForce);
             abilityTarget.ApplyDamage(actualDamage);
         }
-
         Destroy(gameObject);
     }
 

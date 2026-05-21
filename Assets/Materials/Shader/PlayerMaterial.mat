@@ -66,11 +66,12 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _FadeDistance: 75
-    - _Fresnel_Power: 7.23
+    - _Fresnel_Power: 3.55
     - _OutlineThickness: 0.1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 0
+    - _Smoothness: 0.5
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
@@ -79,8 +80,9 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.9056604, g: 0.67849046, b: 0.3972944, a: 0}
-    - _ColorGlow: {r: 4.926027, g: 6.439498, b: 7.202191, a: 0}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorGlow: {r: 17.570265, g: 22.968548, b: 25.688938, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _Tiling: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

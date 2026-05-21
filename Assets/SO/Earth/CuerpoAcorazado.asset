@@ -13,16 +13,18 @@ MonoBehaviour:
   m_Name: CuerpoAcorazado
   m_EditorClassIdentifier: 
   abilityName: Cuerpo Acorazado
-  description: 
+  description: "Activa una armadura de piedra que absorbe hasta 50 puntos de da\xF1o
+    reduciendo cada golpe un 50%, pero reduce tu velocidad de movimiento. Vuelve
+    a activar para desactivarla."
   element: 1
-  icon: {fileID: 21300000, guid: ec6a6dea156141e409be8a8eaab98539, type: 3}
+  icon: {fileID: 21300000, guid: 58f19f6613da506479177cdd637ea1a7, type: 3}
   cooldown: 7
   minRange: 0
-  maxRange: 8
-  aiPriority: 1
+  maxRange: 30
+  aiPriority: 0.5
   animationStateName: Earth3
   activationDelay: 1.2
   totalAnimationDuration: 2.1
-  activationSound: {fileID: 0}
+  activationSound: {fileID: 11400000, guid: ab305376686f12548b8a6d33a12c87dd, type: 2}
   absorptionAmount: 50
   speedMultiplier: 0.5

@@ -13,16 +13,17 @@ MonoBehaviour:
   m_Name: GolpeDeMarea
   m_EditorClassIdentifier: 
   abilityName: Golpre de Marea
-  description: 
+  description: "Invoca una ola de agua que avanza hacia el enemigo. Inflige 10 de
+    da\xF1o, lo empuja con fuerza 12 y reduce su velocidad un 50% durante 2 segundos."
   element: 2
   icon: {fileID: 21300000, guid: 9b854db0776b62b45ba1a118482d6059, type: 3}
   cooldown: 5
-  minRange: 0
-  maxRange: 8
+  minRange: 3.5
+  maxRange: 11
   aiPriority: 1
   animationStateName: Water1
   activationDelay: 1
   totalAnimationDuration: 2
-  activationSound: {fileID: 0}
+  activationSound: {fileID: 11400000, guid: e8a44779ac845d94fa0d55fd97e35ab9, type: 2}
   wavePrefab: {fileID: -8540998114614274175, guid: 11e47b6a0efd59646b77b203c3a87999, type: 3}
   spawnOffset: 1.5

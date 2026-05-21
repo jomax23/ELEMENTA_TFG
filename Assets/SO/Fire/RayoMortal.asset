@@ -13,15 +13,19 @@ MonoBehaviour:
   m_Name: RayoMortal
   m_EditorClassIdentifier: 
   abilityName: Rayo Mortal
-  description: 
+  description: "Emite un destello de energ\xEDa pura de corto alcance. Inflige 20
+    de da\xF1o e inmoviliza al objetivo durante 2 segundos."
   element: 0
   icon: {fileID: 21300000, guid: ec413e63c48b1224ba61827cc1539583, type: 3}
   cooldown: 10
-  minRange: 0
-  maxRange: 8
-  aiPriority: 1
+  minRange: 6
+  maxRange: 12
+  aiPriority: 0.25
   animationStateName: Fire4
   activationDelay: 1.1
   totalAnimationDuration: 2.16
-  activationSound: {fileID: 0}
-  beamPrefab: {fileID: 1589819868445927582, guid: 93d9c4ad9870c4144bc920842c0e2624, type: 3}
+  activationSound: {fileID: 11400000, guid: ca56f1d15adbf6c41b55595d819fcdc7, type: 2}
+  beamPrefab: {fileID: 1589819868445927582, guid: f36d90e5b20f27644a8c5e8f337547f3, type: 3}
+  maxSearchDistance: 50
+  searchRadius: 0.5
+  targetTransformName: mixamorig1:Spine2

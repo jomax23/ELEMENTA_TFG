@@ -13,16 +13,18 @@ MonoBehaviour:
   m_Name: Terremoto
   m_EditorClassIdentifier: 
   abilityName: Terremoto
-  description: 
+  description: "Golpea el suelo creando una zona s\xEDsmica a tu alrededor. Los enemigos
+    dentro reciben 5 da\xF1o/seg y son interrumpidos constantemente durante 3 segundos."
   element: 1
   icon: {fileID: 21300000, guid: b979f641d7b039b4bb06cf99dc65c761, type: 3}
   cooldown: 5
-  minRange: 0
-  maxRange: 8
+  minRange: 3.5
+  maxRange: 10
   aiPriority: 1
   animationStateName: Earth2
   activationDelay: 1.06
   totalAnimationDuration: 1.8
-  activationSound: {fileID: 0}
+  activationSound: {fileID: 11400000, guid: ba5b6aaec7fb5294aa829cd68b451c07, type: 2}
   areaPrefab: {fileID: 889066823660661820, guid: 8b554de1d6849ad44ba50763ee034332, type: 3}
-  spawnOffset: 0
+  spawnDistance: 5
+  spawnOffset: -0.5

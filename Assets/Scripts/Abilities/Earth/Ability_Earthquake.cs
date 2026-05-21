@@ -9,7 +9,8 @@ public class Ability_Earthquake : AbilityData
 {
     [Header("Area Prefab")]
     [SerializeField] private EarthquakeArea areaPrefab;
-    [SerializeField] private float          spawnOffset = 0f;
+    [SerializeField] private float spawnDistance;
+    [SerializeField] private float spawnOffset = 0f;
 
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
@@ -26,8 +27,10 @@ public class Ability_Earthquake : AbilityData
             return;
         }
 
-        Vector3 spawnPos = owner.transform.position;
-        spawnPos.y += spawnOffset;
+        int     dirX     = user.FacingDirection;
+        Vector3 spawnPos = owner.transform.position
+                           + Vector3.right * dirX * spawnDistance
+                           + Vector3.up    * spawnOffset;
 
         EarthquakeArea area = Instantiate(areaPrefab, spawnPos, Quaternion.identity);
         area.Initialize(user.TargetLayers, efficiency);

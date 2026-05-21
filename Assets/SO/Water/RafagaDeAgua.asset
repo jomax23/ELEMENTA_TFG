@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: RafagaDeAgua
   m_EditorClassIdentifier: 
   abilityName: "R\xE1faga de Agua"
-  description: 
+  description: "Dispara una r\xE1faga de 3 proyectiles de agua en sucesi\xF3n r\xE1pida.
+    Cada uno impacta por 10 de da\xF1o y empuja al objetivo hacia atr\xE1s."
   element: 2
   icon: {fileID: 21300000, guid: 45196540e81a190489bfdbc151573ed4, type: 3}
   cooldown: 5
-  minRange: 0
-  maxRange: 8
+  minRange: 3.5
+  maxRange: 11
   aiPriority: 1
   animationStateName: Water2
   activationDelay: 1
   totalAnimationDuration: 2
-  activationSound: {fileID: 0}
+  activationSound: {fileID: 11400000, guid: 44a1debce2dbba243b1ddf117092477f, type: 2}
   projectilePrefab: {fileID: 994275371397674478, guid: 57adfae32a722124c982772dabb10850, type: 3}
   projectileCount: 5
   timeBetweenShots: 0.1

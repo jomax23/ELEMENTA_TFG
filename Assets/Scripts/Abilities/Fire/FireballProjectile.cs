@@ -1,9 +1,5 @@
 using UnityEngine;
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Bola de Fuego — proyectil que aplica daño de impacto + quemadura.
-// Hereda de ProjectileBase para la detección automática de obstáculos.
-// ──────────────────────────────────────────────────────────────────────────────
 public class FireballProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
@@ -24,11 +20,10 @@ public class FireballProjectile : ProjectileBase, IReversible
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño y duración de quemadura.</param>
     public void Initialize(int dirX, LayerMask layers, float efficiency = 1f)
     {
         directionX   = dirX;
-        targetLayers = layers;  // asignado en ProjectileBase
+        targetLayers = layers;
 
         actualImpactDamage = impactDamage        * efficiency;
         actualBurnDps      = burnDamagePerSecond * efficiency;
@@ -37,7 +32,9 @@ public class FireballProjectile : ProjectileBase, IReversible
 
     private void Update()
     {
-        transform.position += Vector3.right * directionX * speed * Time.deltaTime;
+        // TryMove hace el Raycast antes de mover — si hay obstáculo, se destruye
+        // y el Update no continúa ejecutándose ese fotograma.
+        if (!TryMove(Vector3.right * directionX, speed)) return;
 
         lifeTimer += Time.deltaTime;
         if (lifeTimer >= lifetime)
@@ -45,7 +42,7 @@ public class FireballProjectile : ProjectileBase, IReversible
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // ProjectileBase — template methods
+    // ProjectileBase
     // ─────────────────────────────────────────────────────────────────────────
 
     protected override void OnTargetHit(Collider target)
@@ -56,12 +53,8 @@ public class FireballProjectile : ProjectileBase, IReversible
             abilityTarget.ApplyDamage(actualImpactDamage);
             abilityTarget.ApplyBurn(actualBurnDps, actualBurnDuration);
         }
-
         Destroy(gameObject);
     }
-
-    // OnObstacleHit() usa la implementación por defecto: Destroy(gameObject).
-    // Si quieres añadir VFX de impacto en pared, haz override aquí.
 
     // ─────────────────────────────────────────────────────────────────────────
     // IReversible
