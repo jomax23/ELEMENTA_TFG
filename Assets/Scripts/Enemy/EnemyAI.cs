@@ -264,12 +264,7 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
     private void PerformMeleeAttack(float dist, int dir)
     {
         if (dist > meleeHitboxRange) return;
-        var target = playerTransform.GetComponent<IAbilityTarget>();
-        if (target == null) return;
-
-        enemyBody.PlayAttack();
-        target.ApplyDamage(meleeDamage, DamageType.Punch);
-        target.ApplyImpulse(dir * meleeKnockback);
+        StartCoroutine(enemyBody.PunchRoutine());
     }
 
     // ─────────────────────────────────────────────────────────────────────────

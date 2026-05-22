@@ -18,8 +18,8 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
     
     // ── Movimiento ────────────────────────────────────────────────────────────
     [Header("Movement")]
-    [SerializeField] private float moveSpeed        = 6f;
-    [SerializeField] private float sprintMultiplier = 100f;
+    //[SerializeField] private float moveSpeed        = 6f;
+    //[SerializeField] private float sprintMultiplier = 100f;
     [SerializeField] private float gravity          = -20f;
     private float fixedZ;
     private float aiVelocity;
@@ -46,6 +46,7 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
     [SerializeField] private LayerMask targetLayers;
     [SerializeField] private PunchHitbox punchHitbox;
     [SerializeField] private float       punchTime;
+    [SerializeField] private float punchHitboxDuration = 0.12f;
     
     // ── Habilidades ───────────────────────────────────────────────────────────
     [Header("Ability Animation")]
@@ -134,19 +135,17 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
 
     private void HandleMovement()
     {
-        movement.x = isStunned ? externalImpulse : aiVelocity + externalImpulse;
-        movement.y = verticalVelocity;
-        /*
         bool canMove = horizontalMovementEnabled && !IsUsingAbility && !isStunned;
 
-        float baseSpeed   = moveSpeed * slowMultiplier * armorSpeedMultiplier;
-        float sprintSpeed = sprintMultiplier * slowMultiplier * armorSpeedMultiplier;
+        float baseSpeed = slowMultiplier * armorSpeedMultiplier;
 
-        movement.x = canMove ? aiVelocity * (baseSpeed + sprintSpeed) + externalImpulse : externalImpulse;
-        
+        movement.x = canMove
+            ? (aiVelocity * baseSpeed) + externalImpulse
+            : externalImpulse;
+
         movement.y = verticalVelocity;
         movement.z = 0f;
-        */
+
         characterController.Move(movement * Time.deltaTime);
     }
     
@@ -164,6 +163,21 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
         }
     }
 
+    public IEnumerator PunchRoutine()
+    {
+        IsUsingAbility = true;
+        SafeSetTrigger(AnimPunch);
+
+        if (punchHitbox != null) punchHitbox.SetActive(true);
+        yield return new WaitForSeconds(punchHitboxDuration);
+        if (punchHitbox != null) punchHitbox.SetActive(false);
+
+        float remaining = punchTime - punchHitboxDuration;
+        if (remaining > 0f) yield return new WaitForSeconds(remaining);
+
+        IsUsingAbility = false;
+    }
+    
     // =========================
     // ANIMATIONS
     // =========================

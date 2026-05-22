@@ -55,6 +55,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
     [SerializeField] private LayerMask targetLayers;
     [SerializeField] private PunchHitbox   punchHitbox;
     [SerializeField] private float         punchTime;
+    [Header("Punch")]
+    [SerializeField] private float punchHitboxDuration = 0.12f;
     
     // ── Habilidades ───────────────────────────────────────────────────────────
     [Header("Ability Animation")]
@@ -193,7 +195,6 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
     private void HandlePunch()
     {
         if (IsUsingAbility || isStunned) return;
-
         if (punchAction.action.WasPressedThisFrame())
         {
             StartCoroutine(PunchRoutine());
@@ -203,14 +204,18 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
     private IEnumerator PunchRoutine()
     {
         IsUsingAbility = true;
-
         animator.SetTrigger(AnimPunch);
 
-        yield return new WaitForSeconds(punchTime);
+        if (punchHitbox != null) punchHitbox.SetActive(true);
+        yield return new WaitForSeconds(punchHitboxDuration);
+        if (punchHitbox != null) punchHitbox.SetActive(false);
+
+        float remaining = punchTime - punchHitboxDuration;
+        if (remaining > 0f) yield return new WaitForSeconds(remaining);
 
         IsUsingAbility = false;
     }
-
+    
     // =========================
     // ANIMATIONS
     // =========================

@@ -5530,7 +5530,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   punchHitbox: {fileID: 945211125}
-  punchTime: 0.43
+  punchTime: 0.35
+  punchHitboxDuration: 0.58
   abilityAnimationCrossFade: 0.1
 --- !u!143 &1034145120
 CharacterController:
@@ -5551,7 +5552,7 @@ CharacterController:
   m_Enabled: 1
   serializedVersion: 3
   m_Height: 2
-  m_Radius: 0.5
+  m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
@@ -10116,7 +10117,7 @@ CharacterController:
   m_Enabled: 1
   serializedVersion: 3
   m_Height: 2
-  m_Radius: 0.5
+  m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
@@ -11551,9 +11552,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60bcba6af6bf28f43ba021d881562ef7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 6
-  sprintMultiplier: 100
-  jumpForce: 8
   gravity: -20
   impulseDecay: 30
   slowRecoverySpeed: 2
@@ -11561,7 +11559,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8192
   punchHitbox: {fileID: 794007718}
-  punchTime: 0
+  punchTime: 0.35
+  punchHitboxDuration: 0.58
   abilityAnimationCrossFade: 0.1
 --- !u!114 &5866666020038000497
 MonoBehaviour:
@@ -11596,14 +11595,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c3ce315713ed14d4d9921ef13a815bdd, type: 2}
   - {fileID: 11400000, guid: 34e0cd0864e1979488afbf22504c346c, type: 2}
   - {fileID: 11400000, guid: a0a1ef7bc4d534e409e97d7ac0c905ff, type: 2}
-  - {fileID: 11400000, guid: 393a47cad932e744a8f2030de5aee924, type: 2}
+  - {fileID: 11400000, guid: 44abf8c56e79e9f4a8a08a6a07f01e4c, type: 2}
   approachSpeed: 3.5
   backOffSpeed: 2.5
   sprintSpeed: 6.5
   sprintDistance: 6
   detectionRange: 50
-  meleeRange: 3
-  preferredDistance: 1.3
+  meleeRange: 1
+  preferredDistance: 1
   minimumDistance: 0.7
   meleeDamage: 10
   meleeKnockback: 5
