@@ -81,6 +81,12 @@ public class PlayerAbilities : MonoBehaviour
 
             // El elemento inicial debe coincidir con el elegido por el jugador en la sesión.
             currentElement = mainElement;
+            
+            if (MatchController.Instance != null)
+            {
+                MatchController.Instance.OnMasterControlStart += RefreshAbilitiesOnStateChange;
+                MatchController.Instance.OnMasterControlEnd   += RefreshAbilitiesOnStateChange;
+            }
         }
         else
         {
@@ -107,8 +113,20 @@ public class PlayerAbilities : MonoBehaviour
     {
         if (playerMovement != null)
             playerMovement.OnStunApplied -= HandleStunInterrupt;
+        
+        if (MatchController.Instance != null)
+        {
+            MatchController.Instance.OnMasterControlStart -= RefreshAbilitiesOnStateChange;
+            MatchController.Instance.OnMasterControlEnd   -= RefreshAbilitiesOnStateChange;
+        }
     }
 
+    private void RefreshAbilitiesOnStateChange()
+    {
+        LoadAbilitiesForCurrentElement();
+        abilitiesHUD?.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
+    }
+    
     // =========================
     // INPUT
     // =========================
@@ -242,14 +260,14 @@ public class PlayerAbilities : MonoBehaviour
 
     private float GetEfficiencyForAbility(AbilityData ability)
     {
-        if (affinityData == null) return 1f;
-        return affinityData.GetEfficiency(mainElement, ability.element);
+        if (MatchController.Instance?.ShouldBypassAffinity() == true) return 1f;
+        return affinityData?.GetEfficiency(mainElement, ability.element) ?? 1f;
     }
 
     private float GetCooldownMultiplierForAbility(AbilityData ability)
     {
-        if (affinityData == null) return 1f;
-        return affinityData.GetCooldownMultiplier(mainElement, ability.element);
+        if (MatchController.Instance?.ShouldBypassAffinity() == true) return 1f;
+        return affinityData?.GetCooldownMultiplier(mainElement, ability.element) ?? 1f;
     }
 
     // =========================
@@ -341,16 +359,14 @@ public class PlayerAbilities : MonoBehaviour
         ElementAbilitySet set = FindAbilitySet(currentElement);
         if (set == null)
         {
-            Debug.LogWarning($"[PlayerAbilities] Sin ElementAbilitySet para {currentElement}.");
             currentAbility1 = currentAbility2 = currentAbility3 = currentAbility4 = null;
             return;
         }
 
-        // La afinidad puede limitar cuántas habilidades están disponibles para este elemento.
-        // Si no hay datos de afinidad, asumimos que las 4 están desbloqueadas.
-        int availableCount = affinityData != null
-            ? affinityData.GetAvailableAbilityCount(mainElement, currentElement)
-            : 4;
+        // Durante Control Maestro: siempre 4 habilidades, sin bloqueo por afinidad
+        int availableCount = MatchController.Instance?.ShouldBypassAffinity() == true 
+            ? 4 
+            : (affinityData?.GetAvailableAbilityCount(mainElement, currentElement) ?? 4);
 
         currentAbility1 = availableCount >= 1 ? set.ability1 : null;
         currentAbility2 = availableCount >= 2 ? set.ability2 : null;

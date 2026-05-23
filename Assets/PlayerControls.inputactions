@@ -160,7 +160,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Block",
+                    "name": "MasterControl",
                     "type": "Button",
                     "id": "9a2588df-c5bb-400c-81cd-ed5ed6e29971",
                     "expectedControlType": "",
@@ -419,7 +419,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Block",
+                    "action": "MasterControl",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

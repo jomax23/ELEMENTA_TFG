@@ -246,7 +246,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Block"",
+                    ""name"": ""MasterControl"",
                     ""type"": ""Button"",
                     ""id"": ""9a2588df-c5bb-400c-81cd-ed5ed6e29971"",
                     ""expectedControlType"": """",
@@ -505,7 +505,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Block"",
+                    ""action"": ""MasterControl"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -533,7 +533,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_Gameplay_NextElement = m_Gameplay.FindAction("NextElement", throwIfNotFound: true);
         m_Gameplay_ChangeElement = m_Gameplay.FindAction("ChangeElement", throwIfNotFound: true);
         m_Gameplay_AbilitiesMenu = m_Gameplay.FindAction("AbilitiesMenu", throwIfNotFound: true);
-        m_Gameplay_Block = m_Gameplay.FindAction("Block", throwIfNotFound: true);
+        m_Gameplay_MasterControl = m_Gameplay.FindAction("MasterControl", throwIfNotFound: true);
     }
 
     ~@PlayerControls()
@@ -631,7 +631,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_NextElement;
     private readonly InputAction m_Gameplay_ChangeElement;
     private readonly InputAction m_Gameplay_AbilitiesMenu;
-    private readonly InputAction m_Gameplay_Block;
+    private readonly InputAction m_Gameplay_MasterControl;
     /// <summary>
     /// Provides access to input actions defined in input action map "Gameplay".
     /// </summary>
@@ -712,9 +712,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @AbilitiesMenu => m_Wrapper.m_Gameplay_AbilitiesMenu;
         /// <summary>
-        /// Provides access to the underlying input action "Gameplay/Block".
+        /// Provides access to the underlying input action "Gameplay/MasterControl".
         /// </summary>
-        public InputAction @Block => m_Wrapper.m_Gameplay_Block;
+        public InputAction @MasterControl => m_Wrapper.m_Gameplay_MasterControl;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -792,9 +792,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @AbilitiesMenu.started += instance.OnAbilitiesMenu;
             @AbilitiesMenu.performed += instance.OnAbilitiesMenu;
             @AbilitiesMenu.canceled += instance.OnAbilitiesMenu;
-            @Block.started += instance.OnBlock;
-            @Block.performed += instance.OnBlock;
-            @Block.canceled += instance.OnBlock;
+            @MasterControl.started += instance.OnMasterControl;
+            @MasterControl.performed += instance.OnMasterControl;
+            @MasterControl.canceled += instance.OnMasterControl;
         }
 
         /// <summary>
@@ -857,9 +857,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @AbilitiesMenu.started -= instance.OnAbilitiesMenu;
             @AbilitiesMenu.performed -= instance.OnAbilitiesMenu;
             @AbilitiesMenu.canceled -= instance.OnAbilitiesMenu;
-            @Block.started -= instance.OnBlock;
-            @Block.performed -= instance.OnBlock;
-            @Block.canceled -= instance.OnBlock;
+            @MasterControl.started -= instance.OnMasterControl;
+            @MasterControl.performed -= instance.OnMasterControl;
+            @MasterControl.canceled -= instance.OnMasterControl;
         }
 
         /// <summary>
@@ -1020,11 +1020,11 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAbilitiesMenu(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Block" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "MasterControl" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnBlock(InputAction.CallbackContext context);
+        void OnMasterControl(InputAction.CallbackContext context);
     }
 }

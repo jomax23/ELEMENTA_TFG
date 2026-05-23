@@ -18,7 +18,7 @@ public class HitStop : MonoBehaviour
     private IEnumerator HitStopRoutine(float duration)
     {
         // EFECTO SOLO VISUAL: Pausa animaciones sin tocar Time.timeScale ni físicas
-        Animator[] anims = FindObjectsOfType<Animator>();
+        Animator[] anims = FindObjectsByType<Animator>(FindObjectsSortMode.None);
         foreach (var a in anims) a.speed = 0f;
 
         yield return new WaitForSecondsRealtime(duration);

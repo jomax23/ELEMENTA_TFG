@@ -44,8 +44,8 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
     
     // ── Ataque melee ──────────────────────────────────────────────────────────
     [Header("Melee Attack")]
-    [SerializeField] private float meleeDamage         = 10f;
-    [SerializeField] private float meleeKnockback      = 5f;
+    //[SerializeField] private float meleeDamage         = 10f;
+    //[SerializeField] private float meleeKnockback      = 5f;
     [SerializeField] private float meleeAttackCooldown = 0.75f;
     [SerializeField] private float meleeHitboxRange    = 2f;
     private float meleeTimer;
