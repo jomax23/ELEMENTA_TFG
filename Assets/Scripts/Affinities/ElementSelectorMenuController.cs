@@ -218,4 +218,6 @@ public class ElementSelectorMenuController : MonoBehaviour
         GameSession.Instance?.SetEnemyElement(selectedEnemyElement);
         SceneManager.LoadScene(gameSceneName);
     }
+    
+    public void Return() => SceneManager.LoadScene("Scenes/MainMenu");
 }

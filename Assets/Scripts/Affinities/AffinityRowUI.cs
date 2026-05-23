@@ -29,7 +29,7 @@ public class AffinityRowUI : MonoBehaviour
         {
             abilitiesText.text = info.availableAbilities > 0
                 ? $"{info.availableAbilities}/4"
-                : "BLOQUEADO";
+                : "0/4";
         }
 
         if (efficiencyText != null)
@@ -42,7 +42,7 @@ public class AffinityRowUI : MonoBehaviour
         if (cooldownText != null)
         {
             cooldownText.text = info.cooldownMultiplier <= 1f
-                ? "— "
+                ? "—"
                 : $"+{((info.cooldownMultiplier - 1f) * 100f):0}%";
         }
 

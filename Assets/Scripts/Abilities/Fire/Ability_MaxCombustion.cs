@@ -47,12 +47,9 @@ public class Ability_MaxCombustion : AbilityData
     public override void Cancel(GameObject owner)
     {
         isCancelled = true;
-
-        if (activeBeam != null)
-        {
-            Object.Destroy(activeBeam);
-            activeBeam = null;
-        }
+        // Destrucción inmediata por si la coroutine sigue viva un frame más
+        if (activeBeam != null) Object.Destroy(activeBeam);
+        activeBeam = null;
     }
 
     private IEnumerator Execute(IAbilityUser user, Transform spawnPoint, float efficiency)
@@ -60,19 +57,18 @@ public class Ability_MaxCombustion : AbilityData
         int     dirX = user.FacingDirection;
         Vector3 dir  = Vector3.right * dirX;
 
-        activeBeam = Instantiate(airBeamPrefab, Vector3.zero, Quaternion.identity);
+        activeBeam = Instantiate(airBeamPrefab, spawnPoint.position, Quaternion.identity);
         CombustionBeam beam = activeBeam.GetComponent<CombustionBeam>();
         beam.Initialize(spawnPoint, dir, maxDistance, obstacleLayers, airBeamDuration);
 
         yield return new WaitForSeconds(airBeamDuration);
 
+        // Si hubo stun/interrupción, abortamos antes de lanzar la fireball
         if (isCancelled) yield break;
 
-        if (activeBeam != null)
-        {
-            Object.Destroy(activeBeam);
-            activeBeam = null;
-        }
+        // Limpieza extra (el haz ya se autodestruirá, pero liberamos referencia)
+        if (activeBeam != null) Object.Destroy(activeBeam);
+        activeBeam = null;
 
         FireballProjectile fireball = Instantiate(
             fireballPrefab,

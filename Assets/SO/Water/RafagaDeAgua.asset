@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "Dispara una r\xE1faga de 3 proyectiles de agua en sucesi\xF3n r\xE1pida.
     Cada uno impacta por 10 de da\xF1o y empuja al objetivo hacia atr\xE1s."
   element: 2
-  icon: {fileID: 21300000, guid: 45196540e81a190489bfdbc151573ed4, type: 3}
+  icon: {fileID: -1449946888, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 5
   minRange: 3.5
   maxRange: 11

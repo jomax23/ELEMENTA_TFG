@@ -177,7 +177,6 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
 
         IsUsingAbility = false;
     }
-    
     // =========================
     // ANIMATIONS
     // =========================

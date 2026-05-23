@@ -6,29 +6,23 @@ public class HitStop : MonoBehaviour
     private static HitStop instance;
     private Coroutine currentRoutine;
 
-    private void Awake()
-    {
-        instance = this;
-    }
+    private void Awake() => instance = this;
 
-    public static void Trigger(float duration)
+    public static void Trigger(float duration = 0.05f)
     {
         if (instance == null) return;
-
-        if (instance.currentRoutine != null)
-            instance.StopCoroutine(instance.currentRoutine);
-
+        if (instance.currentRoutine != null) instance.StopCoroutine(instance.currentRoutine);
         instance.currentRoutine = instance.StartCoroutine(instance.HitStopRoutine(duration));
     }
 
     private IEnumerator HitStopRoutine(float duration)
     {
-        float originalTimeScale = Time.timeScale;
-
-        Time.timeScale = 0f;
+        // EFECTO SOLO VISUAL: Pausa animaciones sin tocar Time.timeScale ni físicas
+        Animator[] anims = FindObjectsOfType<Animator>();
+        foreach (var a in anims) a.speed = 0f;
 
         yield return new WaitForSecondsRealtime(duration);
 
-        Time.timeScale = originalTimeScale;
+        foreach (var a in anims) a.speed = 1f;
     }
 }

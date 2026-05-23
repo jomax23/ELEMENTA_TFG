@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "Detona una explosi\xF3n a tu alrededor que golpea a todos los enemigos
     en rango. Inflige 15 de da\xF1o y los lanza hacia atr\xE1s con fuerza 10."
   element: 0
-  icon: {fileID: 21300000, guid: 780fc5b4cfdbb4b41b21e1b170d4fd75, type: 3}
+  icon: {fileID: -1766812435, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 5
   minRange: 3.5
   maxRange: 6

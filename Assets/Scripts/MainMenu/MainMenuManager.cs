@@ -14,6 +14,8 @@ public class MainMenuManager : MonoBehaviour
     [Header("Scene Names")]
     [SerializeField] private string elementSelectorSceneName = "Scenes/ElementSelector";
     [SerializeField] private string infoSceneName            = "Scenes/Info";
+    [SerializeField] private string tutorialSceneName            = "Scenes/Tutorial";
+    [SerializeField] private string abilitiesSceneName            = "Scenes/Abilities";
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,16 @@ public class MainMenuManager : MonoBehaviour
     public void Info()
     {
         SceneManager.LoadScene(infoSceneName);
+    }
+    
+    public void Tutorial()
+    {
+        SceneManager.LoadScene(tutorialSceneName);
+    }
+    
+    public void Abilities()
+    {
+        SceneManager.LoadScene(abilitiesSceneName);
     }
 
     public void Salir()

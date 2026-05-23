@@ -17,7 +17,7 @@ MonoBehaviour:
     una bola de fuego acelera por esa l\xEDnea infligiendo 10 de da\xF1o y quema
     al objetivo."
   element: 0
-  icon: {fileID: 21300000, guid: 5836902e936fe9646a6428d0bce150c4, type: 3}
+  icon: {fileID: -1631103417, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 7
   minRange: 3.5
   maxRange: 15

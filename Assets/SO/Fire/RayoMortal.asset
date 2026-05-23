@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "Emite un destello de energ\xEDa pura de corto alcance. Inflige 20
     de da\xF1o e inmoviliza al objetivo durante 2 segundos."
   element: 0
-  icon: {fileID: 21300000, guid: ec413e63c48b1224ba61827cc1539583, type: 3}
+  icon: {fileID: 1221517113, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 10
   minRange: 6
   maxRange: 12

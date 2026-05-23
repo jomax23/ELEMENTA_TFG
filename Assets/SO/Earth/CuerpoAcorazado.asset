@@ -17,7 +17,7 @@ MonoBehaviour:
     reduciendo cada golpe un 50%, pero reduce tu velocidad de movimiento. Vuelve
     a activar para desactivarla."
   element: 1
-  icon: {fileID: 21300000, guid: 58f19f6613da506479177cdd637ea1a7, type: 3}
+  icon: {fileID: 1396380032, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 7
   minRange: 0
   maxRange: 30

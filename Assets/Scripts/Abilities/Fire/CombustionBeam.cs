@@ -35,39 +35,30 @@ public class CombustionBeam : MonoBehaviour
 
     private void Update()
     {
-        if (startPoint == null)
-            return;
-
         timer += Time.deltaTime;
 
-        // ======================
-        // Raycast dinámico
-        // ======================
+        // LIMPIEZA AUTOMÁTICA: se elimina al cumplir su duración o si pierde el origen
+        if (timer >= duration || startPoint == null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Vector3 start = startPoint.position;
         Vector3 end = start + direction * maxDistance;
-
         RaycastHit hit;
 
         if (Physics.Raycast(start, direction, out hit, maxDistance, obstacleLayers))
-        {
             end = hit.point;
-        }
 
         line.SetPosition(0, start);
         line.SetPosition(1, end);
 
-        // ======================
-        // Animar opacidad
-        // ======================
         float alpha = Mathf.Clamp01(timer / duration);
-
         rend.GetPropertyBlock(mpb);
-
         Color baseColor = Color.white;
         baseColor.a = alpha;
-
         mpb.SetColor("_BaseColor", baseColor);
-
         rend.SetPropertyBlock(mpb);
     }
 }

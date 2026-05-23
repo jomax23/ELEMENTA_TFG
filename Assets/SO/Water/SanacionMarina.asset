@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Canaliza el poder del agua para recuperar 30 puntos de vida de forma
     gradual a lo largo de 3 segundos.
   element: 2
-  icon: {fileID: 21300000, guid: fd15d62cb509bca4580266b422ca9780, type: 3}
+  icon: {fileID: -1214485720, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 10
   minRange: 5
   maxRange: 30

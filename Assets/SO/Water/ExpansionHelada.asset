@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "Extiende una lanza de hielo en tu direcci\xF3n que crece hasta 8
     metros. Inflige 15 de da\xF1o al primer enemigo que alcanza."
   element: 2
-  icon: {fileID: 21300000, guid: 1845f93104750584bb9a53aa5e060941, type: 3}
+  icon: {fileID: -1309120373, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
   cooldown: 7
   minRange: 3.5
   maxRange: 6
