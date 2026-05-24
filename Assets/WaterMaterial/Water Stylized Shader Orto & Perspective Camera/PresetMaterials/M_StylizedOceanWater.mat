@@ -126,7 +126,7 @@ Material:
     - _ReflectionBlend: 0.594
     - _ReflectionDistortion: 0.38
     - _RefractionScale: 10
-    - _RefractionSpeed: 0.01
+    - _RefractionSpeed: 13.84
     - _RefractionStrength: 0
     - _RippleStrength: 83.62
     - _SecondaryFoamBlend: 0.06
@@ -158,7 +158,7 @@ Material:
     - _IntersectionFoamColor: {r: 1.1486984, g: 1.1486984, b: 1.1486984, a: 1}
     - _PositionRipples: {r: 0, g: 0, b: 0, a: 0}
     - _SecondaryFoamColor: {r: 0, g: 0.002903101, b: 0.19245279, a: 0.40784314}
-    - _ShallowColor: {r: 0, g: 0.57150817, b: 0.7056604, a: 1}
+    - _ShallowColor: {r: 0.14391243, g: 0.7770789, b: 0.9245283, a: 1}
     - _SpecularColor: {r: 0, g: 0.61270547, b: 1, a: 0.35686275}
     - _SurfaceFoamColor: {r: 1.7129308, g: 1.7129308, b: 1.7129308, a: 0.2784314}
     - _TopColor: {r: 0, g: 0.17848217, b: 0.5622641, a: 0.44705883}

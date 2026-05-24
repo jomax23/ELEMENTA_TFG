@@ -1,5 +1,7 @@
 public interface IAbilityTarget
 {
+    bool IsIntangible { get; set; }
+    
     void ApplyImpulse(float force);
     void ApplySlow(float multiplier, float duration);
 

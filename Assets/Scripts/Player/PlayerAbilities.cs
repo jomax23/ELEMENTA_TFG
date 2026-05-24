@@ -223,7 +223,10 @@ public class PlayerAbilities : MonoBehaviour
 
         int slotIndex = GetSlotIndex(ability);
         if (slotIndex != -1)
+        {
             abilitiesHUD.SetCooldown(slotIndex, true);
+            abilitiesHUD.StartCooldown(slotIndex, ability.cooldown * cooldownMult); // ← NUEVO
+        }
 
         if (!string.IsNullOrEmpty(ability.animationStateName))
             playerMovement.PlayAbilityAnimation(ability.animationStateName);
@@ -311,15 +314,11 @@ public class PlayerAbilities : MonoBehaviour
             cooldownTimers[ability] -= Time.deltaTime;
 
             if (cooldownTimers[ability] <= 0f)
-            {
                 cooldownTimers[ability] = 0f;
-
-                // Solo actualizamos la HUD si esa habilidad está visible en el elemento actual.
-                int slotIndex = GetSlotIndex(ability);
-                if (slotIndex != -1)
-                    abilitiesHUD.SetCooldown(slotIndex, false);
-            }
         }
+    
+        // Actualizar HUD cada frame con los tiempos REALES de las habilidades visibles
+        RefreshCooldownHUD();
     }
 
     // =========================
@@ -328,10 +327,11 @@ public class PlayerAbilities : MonoBehaviour
 
     private void HandleElementChangeScroll()
     {
+        if (playerMovement.IsUsingAbility) return;
+    
         scrollTimer -= Time.deltaTime;
         if (scrollTimer > 0f) return;
 
-        // Leemos la rueda del ratón/scroll y exigimos un mínimo para evitar ruido.
         float scrollValue = changeElementScrollAction.action.ReadValue<float>();
         if (Mathf.Abs(scrollValue) < 0.01f) return;
 
@@ -407,9 +407,13 @@ public class PlayerAbilities : MonoBehaviour
 
     private void RefreshSlot(int index, AbilityData ability)
     {
-        bool onCooldown = ability != null
-            && cooldownTimers.ContainsKey(ability)
-            && cooldownTimers[ability] > 0f;
-        abilitiesHUD.SetCooldown(index, onCooldown);
+        if (ability == null)
+        {
+            abilitiesHUD.UpdateSlotCooldown(index, 0f);
+            return;
+        }
+    
+        float remaining = cooldownTimers.TryGetValue(ability, out float time) ? time : 0f;
+        abilitiesHUD.UpdateSlotCooldown(index, remaining);
     }
 }

@@ -61,6 +61,7 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
     // ── Habilidades ───────────────────────────────────────────────────────────
     [Header("Ability Animation")]
     [SerializeField] private float abilityAnimationCrossFade = 0.1f;
+    public bool IsIntangible { get; set; }
     
     // ── IAbilityUser ──────────────────────────────────────────────────────────
     public int       FacingDirection { get; private set; } = 1;
@@ -306,11 +307,15 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
 
     public void ApplyImpulse(float force)
     {
+        if (IsIntangible) return;
+        
         externalImpulse += armor != null && armor.IsActive ? force * 0.5f : force;
     }
 
     public void ApplySlow(float multiplier, float duration)
     {
+        if (IsIntangible) return;
+        
         if (armor != null && armor.IsActive) return;
         slowMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
         slowTimer      = duration;
@@ -318,6 +323,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
 
     public void ApplyStun(float duration)
     {
+        if (IsIntangible) return;
+        
         if (armor != null && armor.IsActive) return;
         isStunned = true;
         stunTimer = duration;
@@ -326,6 +333,9 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
 
     public void ApplyDamage(float damage, DamageType type = DamageType.Generic)
     {
+        
+        if (IsIntangible) return;
+        
         float finalDamage = armor != null && armor.IsActive
             ? armor.AbsorbDamage(damage)
             : damage;
@@ -341,6 +351,8 @@ public class PlayerMovement : MonoBehaviour, IAbilityTarget, IAbilityUser, IArmo
 
     public void ApplyBurn(float damagePerSecond, float duration)
     {
+        if (IsIntangible) return;
+        
         if (armor != null && armor.IsActive) return;
         burnDps   = damagePerSecond;
         burnTimer = duration;

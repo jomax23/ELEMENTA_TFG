@@ -1,9 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-// ──────────────────────────────────────────────────────────────
-// Espíritu Liberado
-// ──────────────────────────────────────────────────────────────
 [CreateAssetMenu(fileName = "EspirituLiberado", menuName = "Abilities/Air/Espíritu Liberado")]
 public class Ability_EspirituLiberado : AbilityData
 {
@@ -15,9 +12,11 @@ public class Ability_EspirituLiberado : AbilityData
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
-        if (user == null)
+        IAbilityTarget target = owner.GetComponent<IAbilityTarget>(); // ← NUEVO
+        
+        if (user == null || target == null)
         {
-            Debug.LogError($"[{nameof(Ability_EspirituLiberado)}] IAbilityUser no encontrado en {owner.name}.", owner);
+            Debug.LogError($"[{nameof(Ability_EspirituLiberado)}] Componentes requeridos no encontrados.", owner);
             return;
         }
 
@@ -30,22 +29,29 @@ public class Ability_EspirituLiberado : AbilityData
 
         isCancelled = false;
         float scaledDuration = duration * efficiency;
-        user.RunCoroutine(SpiritRoutine(fx, scaledDuration));
+        
+        target.IsIntangible = true; // ← Activa intangibilidad
+        fx.EnableSpiritMode();
+        
+        user.RunCoroutine(SpiritRoutine(fx, target, scaledDuration));
     }
 
     public override void Cancel(GameObject owner)
     {
         isCancelled = true;
+        var target = owner.GetComponent<IAbilityTarget>();
+        if (target != null) target.IsIntangible = false; // ← Limpieza segura
         SceneEffectsController.Instance?.DisableSpiritMode();
     }
 
-    private System.Collections.IEnumerator SpiritRoutine(SceneEffectsController fx, float scaledDuration)
+    private IEnumerator SpiritRoutine(SceneEffectsController fx, IAbilityTarget target, float scaledDuration)
     {
-        fx.EnableSpiritMode();
-
         yield return new WaitForSeconds(scaledDuration);
 
         if (!isCancelled)
+        {
+            target.IsIntangible = false; // ← Desactiva intangibilidad
             fx.DisableSpiritMode();
+        }
     }
 }
