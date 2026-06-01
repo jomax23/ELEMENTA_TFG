@@ -10753,7 +10753,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.3440636, y: 0.1596611, z: 0.0020874548}
-  m_Center: {x: -0.00016299733, y: -0.0007744042, z: 1.16415315e-10}
+  m_Center: {x: -0.00016299733, y: -0.0007744042, z: -0.00045}
 --- !u!1 &1900234190
 GameObject:
   m_ObjectHideFlags: 0
@@ -13145,7 +13145,7 @@ MonoBehaviour:
   backOffSpeed: 2.5
   sprintSpeed: 6.5
   sprintDistance: 6
-  detectionRange: 0
+  detectionRange: 50
   meleeRange: 1
   preferredDistance: 1
   minimumDistance: 0.7
