@@ -2,77 +2,84 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// Area effect that spawns with an animation, waits for an activation delay, 
+/// and then continuously damages targets within its trigger volume.
+/// Stats are initialized and scaled by the elemental affinity efficiency multiplier.
+/// </summary>
 public class TrampaVolcanicaArea : MonoBehaviour
 {
-    [Header("Trap Settings")]
-    [SerializeField] private float activationTime  = 1f;
-    [SerializeField] private float damagePerSecond = 10f;
-    [SerializeField] private float lifetime        = 4f;
-
     [Header("Spawn Animation")]
+    [SerializeField] private float activationTime = 1f;
     [SerializeField] private float appearDuration = 0.35f;
-    [SerializeField] private float spawnDepth     = -1.2f;
-    [SerializeField] private float finalScale     = 1f;
+    [SerializeField] private float spawnDepth = -1.2f;
+    [SerializeField] private float finalScale = 1f;
 
-    private LayerMask  targetLayers;
-    private bool       initialized;
-    private float      actualDamagePerSecond;
+    private LayerMask targetLayers;
+    private bool initialized;
+    
+    // Runtime values (injected by AbilityData)
+    private float actualDamagePerSecond;
+    private float actualLifetime;
+
 
     private class TargetData
     {
         public float timeInside;
-        public bool  isActive;
+        public bool isActive;
     }
+ 
+    private readonly Dictionary<IAbilityTarget, TargetData> targets = new();
 
-    private Dictionary<IAbilityTarget, TargetData> targets = new();
-
-    private bool    trapActive;
+    private bool trapActive;
     private Vector3 startPosition;
 
-    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño por segundo.</param>
-    public void Initialize(LayerMask layers, float efficiency = 1f)
+    /// <summary>
+    /// Initializes the trap with target layers and scales effects based on affinity efficiency.
+    /// </summary>
+    /// <param name="layers">The layer mask of valid targets.</param>
+    /// <param name="efficiency">Affinity multiplier (0–1). Scales damage per second.</param>
+    public void Initialize(LayerMask layers, float scaledDamagePerSecond, float scaledLifetime)
     {
-        targetLayers          = layers;
-        actualDamagePerSecond = damagePerSecond * efficiency;
-        initialized           = true;
+        targetLayers = layers;
+        actualDamagePerSecond = scaledDamagePerSecond;
+        actualLifetime = scaledLifetime;
+        initialized = true;
     }
 
     private void Start()
     {
         startPosition = transform.position;
 
+        // Start hidden and below ground
         transform.localScale = Vector3.zero;
-        transform.position  += Vector3.up * spawnDepth;
+        transform.position += Vector3.up * spawnDepth;
 
         StartCoroutine(AppearRoutine());
     }
 
     private IEnumerator AppearRoutine()
     {
-        float   time          = 0f;
+        float time = 0f;
         Vector3 targetPosition = startPosition;
-        Vector3 startScale    = Vector3.zero;
-        Vector3 endScale      = Vector3.one * finalScale;
+        Vector3 startScale = Vector3.zero;
+        Vector3 endScale = Vector3.one * finalScale;
 
         while (time < appearDuration)
         {
             float t = time / appearDuration;
-
             transform.localScale = Vector3.Lerp(startScale, endScale, t);
-            transform.position   = Vector3.Lerp(
-                startPosition + Vector3.up * spawnDepth,
-                targetPosition, t
-            );
-
+            transform.position = Vector3.Lerp(startPosition + Vector3.up * spawnDepth, targetPosition, t);
             time += Time.deltaTime;
             yield return null;
         }
 
         transform.localScale = endScale;
-        transform.position   = targetPosition;
-
+        transform.position = targetPosition;
         trapActive = true;
-        Destroy(gameObject, lifetime);
+        
+        // Use the scaled lifetime passed from the SO
+        Destroy(gameObject, actualLifetime);
     }
 
     private void Update()
@@ -93,12 +100,16 @@ public class TrampaVolcanicaArea : MonoBehaviour
             {
                 data.timeInside += delta;
                 if (data.timeInside >= activationTime)
+                {
                     data.isActive = true;
+                }
             }
             else
             {
                 pair.Key.ApplyDamage(actualDamagePerSecond * delta);
             }
+            // Note: Dictionary iteration during modification is safe here 
+            // because we only modify the values inside the existing entries.
         }
     }
 

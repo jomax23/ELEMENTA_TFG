@@ -1,50 +1,51 @@
 using UnityEngine;
 
+/// <summary>
+/// Standard fireball projectile that moves forward, detects obstacles via Raycast,
+/// and applies impact damage plus a burn effect on hit.
+/// </summary>
 public class FireballProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
-    [SerializeField] private float speed    = 14f;
+    [SerializeField] private float speed = 14f;
     [SerializeField] private float lifetime = 2f;
-
-    [Header("Damage")]
-    [SerializeField] private float impactDamage        = 10f;
-    [SerializeField] private float burnDamagePerSecond = 2f;
-    [SerializeField] private float burnDuration        = 3f;
-
-    private int   directionX;
+    
+    private int directionX;
     private float lifeTimer;
-
     private float actualImpactDamage;
     private float actualBurnDps;
     private float actualBurnDuration;
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public void Initialize(int dirX, LayerMask layers, float efficiency = 1f)
+    /// <summary>
+    /// Initializes the fireball with direction, target layers, and affinity efficiency.
+    /// </summary>
+    public void Initialize(int dirX, LayerMask layers, float scaledDamage, float scaledBurnDps, float scaledBurnDur)
     {
-        directionX   = dirX;
+        directionX = dirX;
         targetLayers = layers;
-
-        actualImpactDamage = impactDamage        * efficiency;
-        actualBurnDps      = burnDamagePerSecond * efficiency;
-        actualBurnDuration = burnDuration        * efficiency;
+        actualImpactDamage = scaledDamage;
+        actualBurnDps = scaledBurnDps;
+        actualBurnDuration = scaledBurnDur;
+        
+        Destroy(gameObject, lifetime);
     }
 
     private void Update()
     {
-        // TryMove hace el Raycast antes de mover — si hay obstáculo, se destruye
-        // y el Update no continúa ejecutándose ese fotograma.
+        // TryMove performs a Raycast before moving. If an obstacle is hit, 
+        // it destroys the projectile and returns false, halting further Update execution.
         if (!TryMove(Vector3.right * directionX, speed)) return;
 
         lifeTimer += Time.deltaTime;
         if (lifeTimer >= lifetime)
+        {
             Destroy(gameObject);
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ProjectileBase
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Called by ProjectileBase when the trigger overlaps with a valid target.
+    /// </summary>
     protected override void OnTargetHit(Collider target)
     {
         IAbilityTarget abilityTarget = target.GetComponent<IAbilityTarget>();
@@ -53,13 +54,13 @@ public class FireballProjectile : ProjectileBase, IReversible
             abilityTarget.ApplyDamage(actualImpactDamage);
             abilityTarget.ApplyBurn(actualBurnDps, actualBurnDuration);
         }
+        
         Destroy(gameObject);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // IReversible
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Reverses the horizontal movement direction (used by abilities like Tornado).
+    /// </summary>
     public void ReverseDirection()
     {
         directionX *= -1;

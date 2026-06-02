@@ -13,6 +13,10 @@ public class GameSession : MonoBehaviour
 
     public ElementType MainElement { get; private set; }
     public ElementType EnemyElement { get; private set; }
+    
+    public bool EnemyDetectionActive { get; private set; }
+    public bool ForceMasterControl { get; private set; }
+    
     public AffinityData AffinityData => affinityData;
     public bool HasChosenElement { get; private set; }
 
@@ -29,7 +33,9 @@ public class GameSession : MonoBehaviour
 
         // No default element — the player MUST choose one in the ElementSelector.
         HasChosenElement = false;
-
+        EnemyDetectionActive = false;
+        ForceMasterControl = false; 
+        
         if (affinityData == null)
             Debug.LogError("[GameSession] AffinityData is not assigned in the Inspector.", this);
     }
@@ -80,11 +86,27 @@ public class GameSession : MonoBehaviour
         return affinityData.GetCooldownMultiplier(MainElement, element);
     }
 
+    public void SetEnemyDetectionActive(bool isActive)
+    {
+        EnemyDetectionActive = isActive;
+        Debug.Log($"[GameSession] Enemy Detection Range set to: {(isActive ? 50f : 0f)}");
+    }
+    
+    public void SetForceMasterControl(bool isActive)
+    {
+        ForceMasterControl = isActive;
+        Debug.Log($"[GameSession] Force Master Control set to: {isActive}");
+    }
+    
     /// <summary>
     /// Resets the session state, requiring the player to choose an element again.
     /// </summary>
     public void ResetSession()
     {
         HasChosenElement = false;
+        EnemyDetectionActive = false;
+        ForceMasterControl = false;
+        
+        Time.timeScale = 1f; 
     }
 }

@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fda4d68b95b4a829f035d48742f3fe9, type: 3}
   m_Name: ElMuro
   m_EditorClassIdentifier: 
-  abilityName: El Muro
-  description: Invoca un muro de piedra frente a ti que bloquea el movimiento y los
-    proyectiles enemigos. Persiste durante 5 segundos.
+  abilityName: The Wall
   element: 1
   icon: {fileID: 2128847509, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Summons a stone wall that blocKs movement for <b>{0:F1}s</b>.
   cooldown: 5
   minRange: 3.5
   maxRange: 10
@@ -25,6 +24,7 @@ MonoBehaviour:
   activationDelay: 0.93
   totalAnimationDuration: 1.8
   activationSound: {fileID: 11400000, guid: f9479428cbda0fd4d8cc11687cda3b88, type: 2}
-  wallPrefab: {fileID: 4289734035827943042, guid: 78acd3e6fa86bf447aa0d27d14a5f822, type: 3}
+  lifetime: 5
   spawnDistance: 2
   spawnOffset: -0.3
+  wallPrefab: {fileID: 4289734035827943042, guid: 78acd3e6fa86bf447aa0d27d14a5f822, type: 3}

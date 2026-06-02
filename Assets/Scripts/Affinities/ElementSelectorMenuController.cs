@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -15,6 +16,18 @@ public class ElementSelectorMenuController : MonoBehaviour
     [Header("Scene")]
     [SerializeField] private string gameSceneName = "Scenes/Map1";
 
+    [Header("Debug / Settings")]
+    [Tooltip("Button that toggles the enemy detection range (0 or 50).")]
+    [SerializeField] private Button detectionToggleBtn;
+    [Tooltip("Sprite at index 0 = Inactive (0 range). Sprite at index 1 = Active (50 range).")]
+    [SerializeField] private List<Sprite> detectionSprites;
+    private Image toggleImage;
+    [Tooltip("Button that forces Master Control to be always active.")]
+    [SerializeField] private Button masterControlToggleBtn;
+    [Tooltip("Sprite at index 0 = Inactive. Sprite at index 1 = Active.")]
+    [SerializeField] private List<Sprite> masterControlSprites;
+    private Image masterControlToggleImage;
+    
     [Header("Player Affinity Rows")]
     [SerializeField] private AffinityRowUI rowFire;
     [SerializeField] private AffinityRowUI rowWater;
@@ -55,8 +68,8 @@ public class ElementSelectorMenuController : MonoBehaviour
     private Image[] enemyImages;
     private TextMeshProUGUI[] enemyTexts;
 
-    private bool playerElementSelected;
-    private bool enemyElementSelected;
+    private bool playerElementSelected = false;
+    private bool enemyElementSelected = false;
     private ElementType selectedPlayerElement;
     private ElementType selectedEnemyElement;
 
@@ -64,10 +77,10 @@ public class ElementSelectorMenuController : MonoBehaviour
     {
         // Map serialized fields to arrays indexed by (int)ElementType.
         // This assumes ElementType enum is ordered: Fire=0, Water=1, Earth=2, Air=3.
-        playerImages = new[] { playerFireImg, playerWaterImg, playerEarthImg, playerAirImg };
-        playerTexts = new[] { playerFireText, playerWaterText, playerEarthText, playerAirText };
-        enemyImages = new[] { enemyFireImg, enemyWaterImg, enemyEarthImg, enemyAirImg };
-        enemyTexts = new[] { enemyFireText, enemyWaterText, enemyEarthText, enemyAirText };
+        playerImages = new[] { playerFireImg, playerEarthImg, playerWaterImg, playerAirImg };
+        playerTexts = new[] { playerFireText, playerEarthText, playerWaterText, playerAirText };
+        enemyImages = new[] { enemyFireImg, enemyEarthImg, enemyWaterImg, enemyAirImg };
+        enemyTexts = new[] { enemyFireText, enemyEarthText, enemyWaterText, enemyAirText };
     }
 
     private void Start()
@@ -75,6 +88,20 @@ public class ElementSelectorMenuController : MonoBehaviour
         playButton.interactable = false;
         ResetPlayerVisuals();
         ResetEnemyVisuals();
+        
+        if (detectionToggleBtn != null)
+        {
+            toggleImage = detectionToggleBtn.GetComponent<Image>();
+            detectionToggleBtn.onClick.AddListener(OnDetectionToggleClicked);
+            UpdateDetectionButtonVisuals();
+        }
+        
+        if (masterControlToggleBtn != null)
+        {
+            masterControlToggleImage = masterControlToggleBtn.GetComponent<Image>();
+            masterControlToggleBtn.onClick.AddListener(OnMasterControlToggleClicked);
+            UpdateMasterControlButtonVisuals();
+        }
     }
 
     private void ResetPlayerVisuals()
@@ -95,6 +122,50 @@ public class ElementSelectorMenuController : MonoBehaviour
         }
     }
 
+    private void OnDetectionToggleClicked()
+    {
+        if (GameSession.Instance == null) return;
+        bool newState = !GameSession.Instance.EnemyDetectionActive;
+        GameSession.Instance.SetEnemyDetectionActive(newState);
+        UpdateDetectionButtonVisuals();
+    }
+    
+    private void UpdateDetectionButtonVisuals()
+    {
+        if (toggleImage == null || detectionSprites == null || detectionSprites.Count < 2)
+        {
+            Debug.LogWarning("[ElementSelectorMenu] Detection toggle button or sprites not properly assigned.", this);
+            return;
+        }
+
+        bool isActive = GameSession.Instance != null && GameSession.Instance.EnemyDetectionActive;
+        
+        // Index 0 = OFF (0), Index 1 = ON (50)
+        toggleImage.sprite = isActive ? detectionSprites[1] : detectionSprites[0];
+    }
+    
+    private void OnMasterControlToggleClicked()
+    {
+        if (GameSession.Instance == null) return;
+        bool newState = !GameSession.Instance.ForceMasterControl;
+        GameSession.Instance.SetForceMasterControl(newState);
+        UpdateMasterControlButtonVisuals();
+    }
+
+    private void UpdateMasterControlButtonVisuals()
+    {
+        if (masterControlToggleImage == null || masterControlSprites == null || masterControlSprites.Count < 2)
+        {
+            Debug.LogWarning("[ElementSelectorMenu] Master Control toggle button or sprites not properly assigned.", this);
+            return;
+        }
+
+        bool isActive = GameSession.Instance != null && GameSession.Instance.ForceMasterControl;
+        
+        // Index 0 = OFF (Normal), Index 1 = ON (Demo/Unlocked)
+        masterControlToggleImage.sprite = isActive ? masterControlSprites[1] : masterControlSprites[0];
+    }
+    
     // ── PLAYER SELECTION ─────────────────────────────────
     public void SelectFire() => SelectPlayer(ElementType.Fire);
     public void SelectWater() => SelectPlayer(ElementType.Water);

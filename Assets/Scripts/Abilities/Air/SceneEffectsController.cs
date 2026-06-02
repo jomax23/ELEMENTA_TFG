@@ -4,8 +4,8 @@ using UnityEngine.Rendering.Universal;
 using System.Collections;
 
 /// <summary>
-/// Controla los efectos de post-proceso globales durante habilidades.
-/// Se registra como singleton de escena para evitar FindObjectOfType externo.
+/// Controls global post-processing effects during specific abilities (e.g., Spirit Mode).
+/// Acts as a scene singleton. Clones the Volume profile on Awake to prevent mutating the shared asset.
 /// </summary>
 public class SceneEffectsController : MonoBehaviour
 {
@@ -27,7 +27,7 @@ public class SceneEffectsController : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton de escena: no persiste entre escenas
+        // Scene singleton: does not persist between scenes
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -37,12 +37,11 @@ public class SceneEffectsController : MonoBehaviour
 
         if (globalVolume == null)
         {
-            Debug.LogError($"[{nameof(SceneEffectsController)}] Global Volume no asignado.", this);
+            Debug.LogError($"[{nameof(SceneEffectsController)}] Global Volume not assigned.", this);
             return;
         }
 
-        // CRÍTICO: Clonar el perfil para evitar mutar el asset compartido en disco.
-        // Sin esto, cualquier crash durante Play Mode corrompe el ScriptableObject.
+        // CRITICAL: Clone the profile to avoid mutating the shared asset on disk.
         globalVolume.profile = Instantiate(globalVolume.profile);
 
         VolumeProfile profile = globalVolume.profile;
@@ -51,7 +50,7 @@ public class SceneEffectsController : MonoBehaviour
 
         if (color == null)
         {
-            Debug.LogError($"[{nameof(SceneEffectsController)}] ColorAdjustments no encontrado en el Volume Profile.", this);
+            Debug.LogError($"[{nameof(SceneEffectsController)}] ColorAdjustments not found in the Volume Profile.", this);
             return;
         }
 
@@ -66,9 +65,9 @@ public class SceneEffectsController : MonoBehaviour
 
     private void CacheOriginalValues()
     {
-        originalExposure   = color.postExposure.value;
+        originalExposure = color.postExposure.value;
         originalSaturation = color.saturation.value;
-        originalContrast   = color.contrast.value;
+        originalContrast = color.contrast.value;
 
         if (dof != null)
         {
@@ -99,27 +98,27 @@ public class SceneEffectsController : MonoBehaviour
         float targetExposure, float targetSaturation, float targetContrast,
         bool enableDOF, float targetBlur)
     {
-        float startExposure   = color.postExposure.value;
+        float startExposure = color.postExposure.value;
         float startSaturation = color.saturation.value;
-        float startContrast   = color.contrast.value;
-        float startBlur       = dof != null ? dof.gaussianMaxRadius.value : 0f;
+        float startContrast = color.contrast.value;
+        float startBlur = dof != null ? dof.gaussianMaxRadius.value : 0f;
 
         if (dof != null)
         {
-            dof.active      = enableDOF;
-            dof.mode.value  = DepthOfFieldMode.Gaussian;
+            dof.active = enableDOF;
+            dof.mode.value = DepthOfFieldMode.Gaussian;
         }
 
         float elapsed = 0f;
 
         while (elapsed < transitionDuration)
         {
-            // SmoothStep para una transición más natural que el lerp lineal
+            // SmoothStep for a more natural transition than linear lerp
             float t = Mathf.SmoothStep(0f, 1f, elapsed / transitionDuration);
 
             color.postExposure.value = Mathf.Lerp(startExposure, targetExposure, t);
-            color.saturation.value   = Mathf.Lerp(startSaturation, targetSaturation, t);
-            color.contrast.value     = Mathf.Lerp(startContrast, targetContrast, t);
+            color.saturation.value = Mathf.Lerp(startSaturation, targetSaturation, t);
+            color.contrast.value = Mathf.Lerp(startContrast, targetContrast, t);
 
             if (dof != null)
                 dof.gaussianMaxRadius.value = Mathf.Lerp(startBlur, targetBlur, t);
@@ -128,10 +127,10 @@ public class SceneEffectsController : MonoBehaviour
             yield return null;
         }
 
-        // Asegurar valores finales exactos
+        // Ensure exact final values
         color.postExposure.value = targetExposure;
-        color.saturation.value   = targetSaturation;
-        color.contrast.value     = targetContrast;
+        color.saturation.value = targetSaturation;
+        color.contrast.value = targetContrast;
 
         if (dof != null)
         {
@@ -139,4 +138,4 @@ public class SceneEffectsController : MonoBehaviour
             dof.active = enableDOF;
         }
     }
-}       
+}

@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dc0118ad9fd4a1f924bcb1b7d42e03e, type: 3}
   m_Name: GolpeDeMarea
   m_EditorClassIdentifier: 
-  abilityName: Golpre de Marea
-  description: "Invoca una ola de agua que avanza hacia el enemigo. Inflige 10 de
-    da\xF1o, lo empuja con fuerza 12 y reduce su velocidad un 50% durante 2 segundos."
+  abilityName: Tidal Strike
   element: 2
   icon: {fileID: 456962448, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Deals <b>{0:F0}</b> damage, KnocKs bacK, and slows target
+    speed to <b>{2:F0}%</b> for <b>{3:F1}s</b>.
   cooldown: 5
   minRange: 3.5
   maxRange: 11
@@ -25,5 +25,9 @@ MonoBehaviour:
   activationDelay: 1
   totalAnimationDuration: 2
   activationSound: {fileID: 11400000, guid: e8a44779ac845d94fa0d55fd97e35ab9, type: 2}
-  wavePrefab: {fileID: -8540998114614274175, guid: 11e47b6a0efd59646b77b203c3a87999, type: 3}
+  damage: 10
+  pushForce: 12
+  slowMultiplier: 0.5
+  slowDuration: 2
   spawnOffset: 1.5
+  wavePrefab: {fileID: -8540998114614274175, guid: 11e47b6a0efd59646b77b203c3a87999, type: 3}

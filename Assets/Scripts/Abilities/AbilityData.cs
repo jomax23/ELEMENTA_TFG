@@ -1,83 +1,67 @@
 using UnityEngine;
 
 /// <summary>
-/// Base class para todos los datos de habilidad.
-///
-/// CAMBIO vs versión anterior:
-///   Activate() y ActivateWithAudio() ahora aceptan un parámetro <c>efficiency</c> (0–1).
-///   Las subclases deben pasar este valor a sus proyectiles/áreas para que apliquen
-///   las penalizaciones de afinidad (daño reducido, duraciones más cortas, etc.).
-///
-///   Compatibilidad con llamadas antiguas: el parámetro tiene valor por defecto 1f,
-///   por lo que el código del enemigo (EnemyAI) no requiere modificación.
+/// Base ScriptableObject for all ability definitions.
+/// Handles core metadata, animation locking, audio, and AI targeting ranges.
+/// Subclasses must implement <see cref="Activate"/> to define the specific effect.
 /// </summary>
 public abstract class AbilityData : ScriptableObject
 {
     [Header("Basic Info")]
     public string abilityName;
-
-    [TextArea]
-    public string description;
-
     public ElementType element;
 
     [Header("UI")]
     public Sprite icon;
 
-    [Header("Cooldown")]
+    [Header("Description Template")]
+    [TextArea(3, 5)]
+    [Tooltip("Usa {0}, {1}, {2}, etc., como marcadores. Las subclases inyectarán los valores reales aquí.")]
+    public string descriptionTemplate;
+    
+    [Header("Cooldown & Ranges")]
     public float cooldown = 1f;
 
-    [Header("Combat Range")]
-    [Tooltip("Minimum distance to the target for this ability to make sense.\n" +
-             "Example: a melee slam → 0. A fireball → 3.")]
+    [Tooltip("Minimum distance to the target for the AI to consider using this ability.")]
     public float minRange = 0f;
 
-    [Tooltip("Maximum distance at which this ability is effective.\n" +
-             "Example: a close-range shockwave → 2. A long-range projectile → 12.")]
+    [Tooltip("Maximum effective distance for the AI to use this ability.")]
     public float maxRange = 8f;
 
-    [Tooltip("How much the AI prefers this ability over others when several are valid.\n" +
-             "Higher = chosen more often. Think of it as 'combo weight'.")]
+    [Tooltip("AI preference weight. Higher values make the AI choose this ability more often.")]
     [Range(0.1f, 3f)]
     public float aiPriority = 1f;
 
-    [Header("Animation")]
-    [Tooltip("Nombre exacto del estado en el Animator Controller (ej: Fire1, Water3...)")]
+    [Header("Animation & Timing")]
+    [Tooltip("Exact name of the state in the Animator Controller (e.g., Fire1, Water3).")]
     public string animationStateName;
 
-    [Tooltip("Segundos desde que se pulsa el input hasta que el efecto de la habilidad ocurre. " +
-             "Debe coincidir con el frame de impacto de tu animación.")]
+    [Tooltip("Seconds from input press until the ability effect actually triggers.")]
     [Min(0f)]
     public float activationDelay = 0f;
 
-    [Tooltip("Duración total del bloqueo de control que impone esta habilidad. " +
-             "El jugador NO puede moverse, saltar ni usar otras habilidades durante este tiempo. " +
-             "Debe ser >= activationDelay.")]
+    [Tooltip("Total duration the player is locked in this ability animation. Must be >= activationDelay.")]
     [Min(0f)]
     public float totalAnimationDuration = 1f;
 
     [Header("Audio")]
-    [Tooltip("Sonido que se reproduce en el momento exacto de activación.")]
+    [Tooltip("Sound played at the exact moment of activation.")]
     [SerializeField] private SoundData activationSound;
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
     // LIFECYCLE
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
 
     /// <summary>
-    /// Ejecuta el efecto de la habilidad aplicando el multiplicador de eficiencia de afinidad.
-    ///
-    /// <paramref name="efficiency"/> escala daño, curación, duración e intensidad de efectos.
-    ///   · 1.0 = elemento principal (sin penalización).
-    ///   · 0.6 = elemento afín secundario.
-    ///   · 0.3 = elemento lejano.
-    ///   · 0.0 = elemento bloqueado (nunca debe llegar a llamarse).
+    /// Executes the ability effect, applying the affinity efficiency multiplier.
     /// </summary>
+    /// <param name="owner">The GameObject casting the ability.</param>
+    /// <param name="efficiency">Scales damage/healing/duration (1.0 = no penalty, 0.0 = locked).</param>
     public abstract void Activate(GameObject owner, float efficiency = 1f);
 
     /// <summary>
-    /// Reproduce el SFX y llama a Activate().
-    /// PlayerAbilities usa este método en lugar de Activate() directamente.
+    /// Plays the activation sound and calls Activate().
+    /// Used by PlayerAbilities to ensure audio is always synchronized.
     /// </summary>
     public void ActivateWithAudio(GameObject owner, float efficiency = 1f)
     {
@@ -88,14 +72,15 @@ public abstract class AbilityData : ScriptableObject
     }
 
     /// <summary>
-    /// Cancela todos los efectos en curso de esta habilidad.
-    /// PlayerAbilities lo llama cuando el usuario es interrumpido antes de que
-    /// la habilidad haya terminado su ciclo completo.
-    ///
-    /// Las subclases con efectos persistentes DEBEN hacer override aquí.
-    /// Las habilidades instantáneas no necesitan override.
+    /// Cancels all ongoing effects of this ability.
+    /// Called when the user is interrupted before the ability finishes its full cycle.
+    /// Subclasses with persistent effects MUST override this.
     /// </summary>
     public virtual void Cancel(GameObject owner) { }
+
+    // =========================================================================
+    // EDITOR & HELPERS
+    // =========================================================================
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -103,24 +88,30 @@ public abstract class AbilityData : ScriptableObject
         if (totalAnimationDuration < activationDelay)
         {
             totalAnimationDuration = activationDelay;
-            Debug.LogWarning(
-                $"[{name}] totalAnimationDuration era menor que activationDelay. " +
-                $"Se ha ajustado a {totalAnimationDuration:F2}s.",
-                this
-            );
+            Debug.LogWarning($"[{name}] totalAnimationDuration was lower than activationDelay. Adjusted to {totalAnimationDuration:F2}s.", this);
         }
     }
 #endif
 
-    /// <summary>Busca un Transform por nombre en toda la jerarquía (no solo hijos directos).</summary>
+    /// <summary>
+    /// Recursively searches for a Transform by name in the entire hierarchy.
+    /// </summary>
     public static Transform FindDeep(Transform root, string name)
     {
         if (root.name == name) return root;
+        
         foreach (Transform child in root)
         {
             Transform result = FindDeep(child, name);
             if (result != null) return result;
         }
+        
         return null;
+    }
+    
+    public virtual string GetFormattedDescription(float efficiency)
+    {
+        // Por defecto, devuelve el texto base sin modificar (para habilidades sin stats escalables)
+        return descriptionTemplate;
     }
 }

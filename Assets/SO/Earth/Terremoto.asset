@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bd09d4987c546f0afe019c1231f694d, type: 3}
   m_Name: Terremoto
   m_EditorClassIdentifier: 
-  abilityName: Terremoto
-  description: "Golpea el suelo creando una zona s\xEDsmica a tu alrededor. Los enemigos
-    dentro reciben 5 da\xF1o/seg y son interrumpidos constantemente durante 3 segundos."
+  abilityName: Earthquake
   element: 1
   icon: {fileID: 486866086, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Creates a devastation zone for <b>{0}</b>s, stunning enemies
+    for <b>{1:F1}s</b> and dealing <b>{2:F1}</b> damage/sec.
   cooldown: 5
   minRange: 3.5
   maxRange: 10
@@ -25,6 +25,9 @@ MonoBehaviour:
   activationDelay: 1.06
   totalAnimationDuration: 1.8
   activationSound: {fileID: 11400000, guid: ba5b6aaec7fb5294aa829cd68b451c07, type: 2}
-  areaPrefab: {fileID: 889066823660661820, guid: 8b554de1d6849ad44ba50763ee034332, type: 3}
+  duration: 3
+  stunDuration: 1
+  damagePerSecond: 5
   spawnDistance: 5
   spawnOffset: -0.5
+  areaPrefab: {fileID: 889066823660661820, guid: 8b554de1d6849ad44ba50763ee034332, type: 3}

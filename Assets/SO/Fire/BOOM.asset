@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: BOOM
   m_EditorClassIdentifier: 
   abilityName: BOOM
-  description: "Detona una explosi\xF3n a tu alrededor que golpea a todos los enemigos
-    en rango. Inflige 15 de da\xF1o y los lanza hacia atr\xE1s con fuerza 10."
   element: 0
   icon: {fileID: -1766812435, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Explodes in a <b>3m</b> radius, dealing <b>{0:F0}</b> damage
+    and KnocKing bacK with <b>{1:F0}</b> force.
   cooldown: 5
   minRange: 3.5
   maxRange: 6
@@ -25,4 +25,7 @@ MonoBehaviour:
   activationDelay: 1.15
   totalAnimationDuration: 2.3
   activationSound: {fileID: 11400000, guid: e98b3d27da41c6149a91594665799105, type: 2}
+  radius: 3
+  damage: 15
+  pushForce: 10
   explosionPrefab: {fileID: 9199726164040676820, guid: d029efd84fb819549a20efb0014647f6, type: 3}

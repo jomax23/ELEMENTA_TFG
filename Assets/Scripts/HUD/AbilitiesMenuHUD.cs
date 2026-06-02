@@ -66,9 +66,31 @@ public class AbilitiesMenuHUD : MonoBehaviour
     {
         if (ability == null) return;
 
+        // 1. Calcular la eficiencia actual basada en la afinidad
+        float efficiency = 1f;
+        if (GameSession.Instance != null && GameSession.Instance.AffinityData != null)
+        {
+            // Si el Control Maestro está activo, la eficiencia es siempre 100% (1f)
+            if (MatchController.Instance != null && MatchController.Instance.ShouldBypassAffinity())
+            {
+                efficiency = 1f;
+            }
+            else
+            {
+                efficiency = GameSession.Instance.AffinityData.GetEfficiency(
+                    GameSession.Instance.MainElement, 
+                    ability.element
+                );
+            }
+        }
+
+        // 2. Obtener la descripción con los valores reales calculados
+        string finalDescription = ability.GetFormattedDescription(efficiency);
+
+        // 3. Actualizar la UI
         bigIcon.sprite = ability.icon;
         abilityName.text = ability.abilityName;
-        abilityDescription.text = ability.description;
+        abilityDescription.text = finalDescription; // <-- TEXTO DINÁMICO
 
         foreach (var btn in abilityButtons)
         {

@@ -1,45 +1,44 @@
 using UnityEngine;
 
+/// <summary>
+/// Standard water projectile that applies impact damage and physical knockback.
+/// Supports direction reversal (e.g., via Tornado).
+/// </summary>
 public class WaterBallProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
-    [SerializeField] private float speed    = 12f;
+    [SerializeField] private float speed = 12f;
     [SerializeField] private float lifetime = 2f;
 
-    [Header("Effects")]
-    [SerializeField] private float pushForce = 6f;
-    [SerializeField] private float damage    = 10f;
-
-    private float directionX;
-    private float actualPushForce;
+    private int directionX;
     private float actualDamage;
+    private float actualPushForce;
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public void Initialize(float dirX, LayerMask layers, float efficiency = 1f)
+    /// <summary>
+    /// Initializes the projectile with direction, target layers, and affinity efficiency.
+    /// </summary>
+    public void Initialize(int dirX, LayerMask layers, float scaledDamage, float scaledPushForce)
     {
-        directionX    = Mathf.Sign(dirX);
-        targetLayers  = layers;
-
-        actualPushForce = pushForce * efficiency;
-        actualDamage    = damage    * efficiency;
-
+        directionX = dirX;
+        targetLayers = layers;
+        actualDamage = scaledDamage;
+        actualPushForce = scaledPushForce;
         Destroy(gameObject, lifetime);
     }
 
     private void Update()
     {
+        // TryMove handles obstacle detection via Raycast
         TryMove(Vector3.right * directionX, speed);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ProjectileBase
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Called by ProjectileBase when hitting a valid target.
+    /// Applies damage, knockback, and destroys the projectile.
+    /// </summary>
     protected override void OnTargetHit(Collider target)
     {
-        IAbilityTarget abilityTarget = target.GetComponent<IAbilityTarget>();
-        if (abilityTarget != null)
+        if (target.GetComponent<IAbilityTarget>() is IAbilityTarget abilityTarget)
         {
             abilityTarget.ApplyImpulse(directionX * actualPushForce);
             abilityTarget.ApplyDamage(actualDamage);
@@ -47,12 +46,12 @@ public class WaterBallProjectile : ProjectileBase, IReversible
         Destroy(gameObject);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // IReversible
-    // ─────────────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Reverses the horizontal movement direction.
+    /// </summary>
     public void ReverseDirection()
     {
-        directionX = Mathf.Sign(directionX) * -1f;
+        directionX *= -1;
     }
 }

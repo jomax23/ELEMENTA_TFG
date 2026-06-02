@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d403b11e830412c9dba99b040096ffa, type: 3}
   m_Name: CombustionMaxima
   m_EditorClassIdentifier: 
-  abilityName: "Combusti\xF3n M\xE1xima"
-  description: "Proyecta un rayo de calor que marca el trayecto. Tras 1 segundo,
-    una bola de fuego acelera por esa l\xEDnea infligiendo 10 de da\xF1o y quema
-    al objetivo."
+  abilityName: Maximum Combustion
   element: 0
   icon: {fileID: -1631103417, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Fires a beam for <b>{0:F1}s</b>, followed by a fireball dealing
+    <b>{1:F0}</b> damage and burning for <b>{2:F1}</b> damage/sec over <b>{3:F1}s</b>.
   cooldown: 7
   minRange: 3.5
   maxRange: 15
@@ -29,6 +28,9 @@ MonoBehaviour:
   airBeamPrefab: {fileID: 7416166309540247779, guid: 69ec03dd24db84245a7b993db4f02872, type: 3}
   airBeamDuration: 1
   maxDistance: 20
+  fireballImpactDamage: 15
+  fireballBurnDps: 3
+  fireballBurnDuration: 3
   fireballPrefab: {fileID: -8769733655855753720, guid: 3bb649b33cc47de408fe899a180bdec3, type: 3}
   obstacleLayers:
     serializedVersion: 2

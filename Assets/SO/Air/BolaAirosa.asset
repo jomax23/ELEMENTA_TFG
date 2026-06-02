@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccf6f0501ae77dc418bf402323c35450, type: 3}
   m_Name: BolaAirosa
   m_EditorClassIdentifier: 
-  abilityName: Bola Airosa
-  description: Te lanzas hacia delante montado sobre una esfera de viento a gran
-    velocidad. Atraviesas la distancia con control total durante 0.6 segundos.
+  abilityName: Aero Dash
   element: 3
   icon: {fileID: -1057170484, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Performs an aerial dash for <b>{0:F1}s</b> at <b>{1:F0}</b>
+    speed, dodging attacKs.
   cooldown: 5
   minRange: 9
   maxRange: 30
@@ -25,3 +25,5 @@ MonoBehaviour:
   activationDelay: 0
   totalAnimationDuration: 0
   activationSound: {fileID: 11400000, guid: 473c6c13630dacc46b45d9cf89ff9497, type: 2}
+  dashSpeed: 14
+  dashDuration: 0.6

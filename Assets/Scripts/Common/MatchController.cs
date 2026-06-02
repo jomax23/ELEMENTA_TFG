@@ -55,14 +55,31 @@ public class MatchController : MonoBehaviour
         Instance = this;
         TimeRemaining = matchDuration;
 
-        if (loadingSlider != null)
+        if (GameSession.Instance != null && GameSession.Instance.ForceMasterControl)
         {
-            loadingSlider.minValue = 0f;
-            loadingSlider.maxValue = 1f;
-            loadingSlider.value = 0f;
-            loadingSlider.interactable = false;
-            fillImage = loadingSlider.fillRect?.GetComponent<Image>();
+            currentState = MCState.Active;
+            IsMasterControlActive = true;
+            IsAvailable = false;
+            activeTimer = float.MaxValue; // Duración infinita para la demo
+        
+            if (loadingSlider != null) loadingSlider.value = 1f;
             UpdateFillColor();
+            OnMasterControlStart?.Invoke();
+        
+            Debug.Log("[MatchController] Master Control FORCED ACTIVE for demonstration.");
+        }
+        // ── FIN NUEVO ──
+        else
+        {
+            if (loadingSlider != null)
+            {
+                loadingSlider.minValue = 0f;
+                loadingSlider.maxValue = 1f;
+                loadingSlider.value = 0f;
+                loadingSlider.interactable = false;
+                fillImage = loadingSlider.fillRect?.GetComponent<Image>();
+                UpdateFillColor();
+            }
         }
 
         UpdateTimerText();

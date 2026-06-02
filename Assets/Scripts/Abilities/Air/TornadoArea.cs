@@ -1,13 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+/// <summary>
+/// Defines a persistent hazard area (Tornado) that detects and reverses 
+/// any incoming projectiles implementing the IReversible interface.
+/// </summary>
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(Rigidbody))]
 public class TornadoArea : MonoBehaviour
 {
-    [Header("Settings")]
-    [SerializeField] private float lifetime = 4f;
-
     [Header("VFX")]
     [SerializeField] private ParticleSystem tornadoParticles;
 
@@ -15,39 +16,31 @@ public class TornadoArea : MonoBehaviour
     [SerializeField] private LayerMask projectileLayers;
 
     private readonly HashSet<IReversible> reversedProjectiles = new();
-
     private CapsuleCollider capsule;
 
     private void Awake()
     {
         capsule = GetComponent<CapsuleCollider>();
-
         Rigidbody rb = GetComponent<Rigidbody>();
         rb.isKinematic = true;
         rb.useGravity = false;
-
         capsule.isTrigger = true;
     }
-
-    private void Start()
+    
+    public void Initialize(float scaledLifetime)
     {
         if (tornadoParticles != null)
             tornadoParticles.Play();
 
-        Destroy(gameObject, lifetime);
+        Destroy(gameObject, scaledLifetime);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsInLayerMask(other.gameObject.layer, projectileLayers))
-            return;
+        if ((projectileLayers.value & (1 << other.gameObject.layer)) == 0) return;
 
         IReversible projectile = other.GetComponent<IReversible>();
-        if (projectile == null)
-            return;
-
-        if (reversedProjectiles.Contains(projectile))
-            return;
+        if (projectile == null || reversedProjectiles.Contains(projectile)) return;
 
         reversedProjectiles.Add(projectile);
         projectile.ReverseDirection();
@@ -60,49 +53,14 @@ public class TornadoArea : MonoBehaviour
             reversedProjectiles.Remove(projectile);
     }
 
+    private void OnDestroy()
+    {
+        reversedProjectiles.Clear();
+    }
+
     private bool IsInLayerMask(int layer, LayerMask mask)
     {
         return (mask.value & (1 << layer)) != 0;
     }
 
-    private void OnDestroy()
-    {
-        reversedProjectiles.Clear();
-    }
-/*
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        CapsuleCollider col = GetComponent<CapsuleCollider>();
-        if (col == null) return;
-
-        Gizmos.color = new Color(0.5f, 1f, 0.5f, 0.3f);
-
-        Matrix4x4 rotationMatrix = Matrix4x4.TRS(
-            transform.position,
-            transform.rotation,
-            Vector3.one
-        );
-
-        Gizmos.matrix = rotationMatrix;
-
-        float radius = col.radius;
-        float height = Mathf.Max(col.height, radius * 2f);
-
-        Vector3 center = col.center;
-
-        float cylinderHeight = height - (radius * 2f);
-
-        Vector3 top = center + Vector3.up * (cylinderHeight / 2f);
-        Vector3 bottom = center - Vector3.up * (cylinderHeight / 2f);
-
-        Gizmos.DrawWireSphere(top, radius);
-        Gizmos.DrawWireSphere(bottom, radius);
-        Gizmos.DrawLine(top + Vector3.forward * radius, bottom + Vector3.forward * radius);
-        Gizmos.DrawLine(top - Vector3.forward * radius, bottom - Vector3.forward * radius);
-        Gizmos.DrawLine(top + Vector3.right * radius, bottom + Vector3.right * radius);
-        Gizmos.DrawLine(top - Vector3.right * radius, bottom - Vector3.right * radius);
-    }
-#endif
-*/
 }

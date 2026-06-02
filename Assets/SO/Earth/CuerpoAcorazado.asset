@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a648650241343c1a723982ba4fbd7ac, type: 3}
   m_Name: CuerpoAcorazado
   m_EditorClassIdentifier: 
-  abilityName: Cuerpo Acorazado
-  description: "Activa una armadura de piedra que absorbe hasta 50 puntos de da\xF1o
-    reduciendo cada golpe un 50%, pero reduce tu velocidad de movimiento. Vuelve
-    a activar para desactivarla."
+  abilityName: Armored Body
   element: 1
   icon: {fileID: 1396380032, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Grants armor absorbing up to <b>{0:F0}</b> damage (50% reduction
+    per hit), but reduces movement speed by <b>{1:F0}%</b>.
   cooldown: 7
   minRange: 0
   maxRange: 30

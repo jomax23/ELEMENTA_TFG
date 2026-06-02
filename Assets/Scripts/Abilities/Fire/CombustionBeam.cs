@@ -1,22 +1,37 @@
 using UnityEngine;
 
+/// <summary>
+/// Visual beam effect that tracks a starting point, raycasts for obstacles, 
+/// and fades out over a set duration.
+/// </summary>
 [RequireComponent(typeof(LineRenderer))]
 public class CombustionBeam : MonoBehaviour
 {
-    private LineRenderer line;
+    [Header("References")]
+    private LineRenderer lineRenderer;
+    private Renderer beamRenderer;
+    private MaterialPropertyBlock mpb;
 
+    [Header("Configuration")]
     private Transform startPoint;
     private Vector3 direction;
-
     private float maxDistance;
     private LayerMask obstacleLayers;
-
     private float duration;
     private float timer;
 
-    MaterialPropertyBlock mpb;
-    Renderer rend;
-    
+    private static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
+
+    private void Awake()
+    {
+        lineRenderer = GetComponent<LineRenderer>();
+        beamRenderer = GetComponent<Renderer>();
+        mpb = new MaterialPropertyBlock();
+    }
+
+    /// <summary>
+    /// Initializes the beam with its trajectory and lifespan.
+    /// </summary>
     public void Initialize(Transform start, Vector3 dir, float distance, LayerMask obstacles, float beamDuration)
     {
         startPoint = start;
@@ -24,20 +39,14 @@ public class CombustionBeam : MonoBehaviour
         maxDistance = distance;
         obstacleLayers = obstacles;
         duration = beamDuration;
-    }
-
-    private void Awake()
-    {
-        line = GetComponent<LineRenderer>();
-        rend = GetComponent<Renderer>();
-        mpb = new MaterialPropertyBlock();
+        timer = 0f;
     }
 
     private void Update()
     {
         timer += Time.deltaTime;
 
-        // LIMPIEZA AUTOMÁTICA: se elimina al cumplir su duración o si pierde el origen
+        // Auto-cleanup when duration expires or origin is destroyed
         if (timer >= duration || startPoint == null)
         {
             Destroy(gameObject);
@@ -46,19 +55,22 @@ public class CombustionBeam : MonoBehaviour
 
         Vector3 start = startPoint.position;
         Vector3 end = start + direction * maxDistance;
-        RaycastHit hit;
 
-        if (Physics.Raycast(start, direction, out hit, maxDistance, obstacleLayers))
+        // Shorten beam if it hits an obstacle
+        if (Physics.Raycast(start, direction, out RaycastHit hit, maxDistance, obstacleLayers))
+        {
             end = hit.point;
+        }
 
-        line.SetPosition(0, start);
-        line.SetPosition(1, end);
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
 
-        float alpha = Mathf.Clamp01(timer / duration);
-        rend.GetPropertyBlock(mpb);
+        // Fade out effect based on remaining time
+        float alpha = 1f - Mathf.Clamp01(timer / duration);
+        beamRenderer.GetPropertyBlock(mpb);
         Color baseColor = Color.white;
         baseColor.a = alpha;
-        mpb.SetColor("_BaseColor", baseColor);
-        rend.SetPropertyBlock(mpb);
+        mpb.SetColor(BaseColorID, baseColor);
+        beamRenderer.SetPropertyBlock(mpb);
     }
 }

@@ -136,7 +136,7 @@ public class AbilitiesInfo : MonoBehaviour
         // Update info display safely
         if (abilityIcon != null) abilityIcon.sprite = ability.icon;
         if (abilityName != null) abilityName.text = ability.abilityName;
-        if (abilityDescription != null) abilityDescription.text = ability.description;
+        if (abilityDescription != null) abilityDescription.text = ability.GetFormattedDescription(1f);
     }
 
     private void SetButtonSelected(Button button, bool selected)

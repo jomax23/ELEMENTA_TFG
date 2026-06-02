@@ -1,33 +1,29 @@
 using UnityEngine;
-using System.Collections;
 
-
-// ──────────────────────────────────────────────────────────────
-// Bola Airosa (Air Dash)
-// ──────────────────────────────────────────────────────────────
+/// <summary>
+/// Air dash ability. 
+/// Requires the PlayerAirDash component on the owner to handle the actual movement physics.
+/// </summary>
 [CreateAssetMenu(fileName = "BolaAirosa", menuName = "Abilities/Air/Bola Airosa")]
 public class Ability_BolaAirosa : AbilityData
 {
+    [Header("Stats")]
+    [SerializeField] private float dashSpeed = 14f;
+    [SerializeField] private float dashDuration = 0.6f;
+    
+    public override string GetFormattedDescription(float efficiency)
+    {
+        // La eficiencia podría escalar la duración en el futuro
+        return string.Format(descriptionTemplate, dashDuration, dashSpeed);
+    }
+    
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
-        PlayerAirDash dash = owner.GetComponent<PlayerAirDash>();
-        if (dash == null)
+        if (owner.GetComponent<PlayerAirDash>() is PlayerAirDash dash)
         {
-            Debug.LogError($"[{nameof(Ability_BolaAirosa)}] PlayerAirDash no encontrado en {owner.name}.", owner);
-            return;
+            dash.OnDashEnded += OnDashFinished;
+            dash.StartDash(dashSpeed, dashDuration * efficiency); // Pasamos los valores desde el SO
         }
-
-        // El dash es un efecto de movilidad; efficiency podría escalar la velocidad/duración
-        // en el futuro si PlayerAirDash lo expone. Por ahora lo activamos como estaba.
-        dash.OnDashEnded += OnDashFinished;
-        dash.StartDash();
     }
-
-    public override void Cancel(GameObject owner)
-    {
-        PlayerAirDash dash = owner.GetComponent<PlayerAirDash>();
-        dash?.ForceEndDash();
-    }
-
-    private void OnDashFinished() { /* VFX de aterrizaje, audio, etc. */ }
+    private void OnDashFinished() { }
 }

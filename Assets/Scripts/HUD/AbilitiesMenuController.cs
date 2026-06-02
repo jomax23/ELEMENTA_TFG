@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Controls the Abilities Menu (pause menu).
@@ -72,5 +73,26 @@ public class AbilitiesMenuController : MonoBehaviour
     {
         currentAbility = ability;
         menuHUD.ShowAbilityInfo(ability);
+    }
+
+    /// <summary>
+    /// Returns to the Main Menu scene.
+    /// CRITICAL: Resets Time.timeScale to 1f and hides the menu to ensure 
+    /// the next match starts completely unpaused and clean.
+    /// </summary>
+    public void Return()
+    {
+        // 1. Force unpause the game immediately
+        Time.timeScale = 1f;
+        
+        // 2. Reset internal state
+        isOpen = false;
+        if (menuRoot != null)
+        {
+            menuRoot.SetActive(false);
+        }
+
+        // 3. Load the main menu
+        SceneManager.LoadScene("Scenes/MainMenu");
     }
 }

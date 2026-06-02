@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7213e2d8cc87458d9164a839b5293ed5, type: 3}
   m_Name: TrampaVolcanica
   m_EditorClassIdentifier: 
-  abilityName: "Trampa Volc\xE1nica"
-  description: "Coloca una trampa \xEDgnea en el suelo frente a ti. Tras 1 segundo
-    de activaci\xF3n, inflige 10 da\xF1o/seg a cualquier enemigo que permanezca sobre
-    ella durante 4 segundos."
+  abilityName: Volcanic Trap
   element: 1
   icon: {fileID: 2061592252, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Spawns a trap dealing <b>{0:F1}</b> damage per second for
+    <b>{1:F1}s</b>.
   cooldown: 10
   minRange: 3.5
   maxRange: 10
@@ -26,5 +25,7 @@ MonoBehaviour:
   activationDelay: 1.4
   totalAnimationDuration: 2.66
   activationSound: {fileID: 11400000, guid: 0f6461874d8a3424a93e04af878f478c, type: 2}
-  trapPrefab: {fileID: 7050849497990865498, guid: fb6bb6d85cbfefd49b6532f6b55f42e6, type: 3}
+  damagePerSecond: 10
+  lifetime: 4
   spawnOffsetX: 1.5
+  trapPrefab: {fileID: 7050849497990865498, guid: fb6bb6d85cbfefd49b6532f6b55f42e6, type: 3}

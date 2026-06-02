@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Tornado
   m_EditorClassIdentifier: 
   abilityName: Tornado
-  description: "Invoca un tornado est\xE1tico frente a ti durante 4 segundos. Cualquier
-    proyectil que entre en su \xE1rea de efecto invierte su direcci\xF3n."
   element: 3
   icon: {fileID: -430022164, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Creates a tornado for <b>{0:F1}s</b> that reverses the direction
+    of enemy projectiles.
   cooldown: 5
   minRange: 3.5
   maxRange: 10
@@ -25,6 +25,7 @@ MonoBehaviour:
   activationDelay: 0.6
   totalAnimationDuration: 1.5
   activationSound: {fileID: 11400000, guid: 4362b0c46c6299347a701e6a8879e65f, type: 2}
-  tornadoPrefab: {fileID: 3406735740084466992, guid: 877d782ddcab8d747814fbe1b8927d4d, type: 3}
+  lifetime: 4
   spawnOffsetX: 1.75
   spawnOffsetY: 0
+  tornadoPrefab: {fileID: 3406735740084466992, guid: 877d782ddcab8d747814fbe1b8927d4d, type: 3}

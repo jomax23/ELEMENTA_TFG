@@ -23,7 +23,7 @@ public class AbilitySlotUI : MonoBehaviour
         }
 
         nameText.text = ability.abilityName;
-        descriptionText.text = ability.description;
+        descriptionText.text = ability.descriptionTemplate;
 
         if (ability.icon != null)
         {

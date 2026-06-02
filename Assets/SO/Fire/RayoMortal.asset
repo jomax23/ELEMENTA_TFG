@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cab6adf3581943d2aeea2582da460b6a, type: 3}
   m_Name: RayoMortal
   m_EditorClassIdentifier: 
-  abilityName: Rayo Mortal
-  description: "Emite un destello de energ\xEDa pura de corto alcance. Inflige 20
-    de da\xF1o e inmoviliza al objetivo durante 2 segundos."
+  abilityName: Lethal Lightning
   element: 0
   icon: {fileID: 1221517113, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: StriKes a targeted enemy, dealing <b>{0:F0}</b> damage and
+    stunning for <b>{1:F1}s</b>.
   cooldown: 10
   minRange: 6
   maxRange: 12
@@ -29,3 +29,5 @@ MonoBehaviour:
   maxSearchDistance: 50
   searchRadius: 0.5
   targetTransformName: mixamorig1:Spine2
+  damage: 20
+  stunDuration: 2

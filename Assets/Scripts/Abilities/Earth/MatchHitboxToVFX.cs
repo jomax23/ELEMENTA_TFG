@@ -1,11 +1,17 @@
 using UnityEngine;
 
+/// <summary>
+/// Synchronizes a physics hitbox's vertical position with a visual effect's animation curve.
+/// This ensures the collision area matches the visual height of the VFX over time without scaling the hitbox itself.
+/// </summary>
 public class MatchHitboxToVFX : MonoBehaviour
 {
-    [Header("Referencias")]
-    [SerializeField] private Transform hitboxObject; // Cube con MeshCollider
+    [Header("References")]
+    [Tooltip("The Transform of the hitbox object (e.g., a Cube with a MeshCollider).")]
+    [SerializeField] private Transform hitboxObject;
 
-    [Header("Curva")]
+    [Header("Curve")]
+    [Tooltip("Animation curve defining the height progression over time.")]
     [SerializeField] private AnimationCurve heightCurve;
 
     [Header("Config")]
@@ -17,26 +23,20 @@ public class MatchHitboxToVFX : MonoBehaviour
 
     private void Start()
     {
-        // Guardamos posición inicial (suelo)
+        // Store the initial local position (ground level)
         startPos = hitboxObject.localPosition;
     }
 
     private void Update()
     {
         timer += Time.deltaTime;
+        float t = Mathf.Clamp01(timer / duration);
+        
+        // Evaluate curve and apply max height multiplier
+        float height = heightCurve.Evaluate(t) * maxHeight;
 
-        float t = timer / duration;
-
-        float curveValue = heightCurve.Evaluate(t);
-
-        float height = curveValue * maxHeight;
-
-        // SOLO mover en Y (sin escalar)
-        hitboxObject.localPosition = new Vector3(
-            startPos.x,
-            startPos.y + height,
-            startPos.z
-        );
+        // Move ONLY on the Y axis, preserving X and Z
+        hitboxObject.localPosition = new Vector3(startPos.x, startPos.y + height, startPos.z);
 
         if (t >= 1f)
         {

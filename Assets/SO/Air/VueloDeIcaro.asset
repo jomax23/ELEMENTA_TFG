@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 192f38d7aae3498293cc9ed91fea2126, type: 3}
   m_Name: VueloDeIcaro
   m_EditorClassIdentifier: 
-  abilityName: "Vuelo de \xCDcaro"
-  description: "Desaf\xEDas la gravedad y asciendes libremente durante 4 segundos.
-    Mientras vuelas puedes moverte en vertical con total libertad."
+  abilityName: Icarus Flight
   element: 3
   icon: {fileID: 912677500, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Grants the ability to fly freely for <b>{0:F1}s</b>.
   cooldown: 7
   minRange: 0
   maxRange: 30

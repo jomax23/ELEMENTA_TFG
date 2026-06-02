@@ -1,33 +1,21 @@
 using UnityEngine;
 using System.Collections;
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Rayo Mortal — beam con LineRenderer(s)
-//
-// Actualiza TODOS los LineRenderers del prefab (root + hijos) con los mismos
-// dos puntos world-space: [0] = origen, [1] = destino.
-// Cada LineRenderer puede tener su propio material/ancho — el script solo
-// mueve sus posiciones, no toca ninguna otra propiedad.
-//
-// SETUP DEL PREFAB:
-//   · Root: este script + BoxCollider (isTrigger = true).
-//   · Añade un LineRenderer en el root y/o en cualquier hijo.
-//     Todos deben tener Use World Space = TRUE y Position Count = 2.
-//   · Obstacle Layers → capas de muros/suelo.
-// ──────────────────────────────────────────────────────────────────────────────
+/// <summary>
+/// Mortal Thunder projectile: a beam that grows towards a target or instantly strikes forward.
+/// Uses LineRenderer(s) for visuals and a dynamically scaled BoxCollider for hit detection.
+/// </summary>
 [RequireComponent(typeof(BoxCollider))]
 public class RayoMortalProjectile : MonoBehaviour
 {
     [Header("Beam Settings")]
-    [SerializeField] private float maxLength    = 10f;
-    [SerializeField] private float damage       = 20f;
-    [SerializeField] private float stunDuration = 2f;
-
-    [Tooltip("Tiempo que el beam permanece visible tras terminar el crecimiento.")]
+    [SerializeField] private float maxLength = 10f;
+    
+    [Tooltip("Time the beam remains visible after growing.")]
     [SerializeField] private float holdDuration = 0.2f;
 
     [Header("Grow Animation")]
-    [Tooltip("Segundos que tarda la línea en crecer desde el origen al destino.")]
+    [Tooltip("Seconds it takes for the line to grow from origin to destination.")]
     [SerializeField] private float growDuration = 0.1f;
 
     [Header("Collider")]
@@ -35,27 +23,25 @@ public class RayoMortalProjectile : MonoBehaviour
     [SerializeField] private float colliderDepth = 0.4f;
 
     [Header("Obstacle Detection")]
-    [Tooltip("⚠ OBLIGATORIO: capas de muros, suelo y plataformas del escenario.")]
+    [Tooltip("⚠ MANDATORY: Layers for walls, ground, and platforms.")]
     [SerializeField] private LayerMask obstacleLayers;
 
-    // Componentes
-    private BoxCollider    hitbox;
-    private LineRenderer[] allLineRenderers; // root + todos los hijos
+    // Components
+    private BoxCollider hitbox;
+    private LineRenderer[] allLineRenderers;
 
-    // Runtime
+    // Runtime state
     private LayerMask targetLayers;
-    private float     actualDamage;
-    private float     actualStunDuration;
-    private bool      hasHit;
-
-    // ─────────────────────────────────────────────────────────────────────────
+    private float actualDamage;
+    private float actualStunDuration;
+    private bool hasHit;
 
     private void Awake()
     {
         hitbox = GetComponent<BoxCollider>();
         hitbox.isTrigger = true;
 
-        // Recoger TODOS los LineRenderers del prefab (root incluido)
+        // Gather ALL LineRenderers in the prefab (root and children)
         allLineRenderers = GetComponentsInChildren<LineRenderer>(includeInactive: true);
 
         foreach (LineRenderer lr in allLineRenderers)
@@ -66,42 +52,39 @@ public class RayoMortalProjectile : MonoBehaviour
             lr.SetPosition(1, transform.position);
         }
 
-        // Collider empieza con tamaño cero
+        // Collider starts with zero size
         ApplyCollider(transform.position, transform.position);
 
         if (allLineRenderers.Length == 0)
-            Debug.LogWarning("[RayoMortal] No se encontró ningún LineRenderer en el prefab " +
-                             "ni en sus hijos. El beam no será visible.", gameObject);
+        {
+            Debug.LogWarning("[RayoMortal] No LineRenderer found in the prefab or its children. The beam will not be visible.", gameObject);
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MODO A — Instantáneo
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // MODE A — Instantaneous
+    // =========================================================================
 
-    public void Initialize(int directionX, LayerMask layers, float efficiency = 1f)
+    public void Initialize(int directionX, LayerMask layers, float scaledDamage, float scaledStunDuration)
     {
-        SetupStats(layers, efficiency);
+        SetupStats(layers, scaledDamage, scaledStunDuration);
         WarnIfEmpty();
 
-        Vector3 origin   = transform.position;
-        Vector3 dir      = Vector3.right * directionX;
+        Vector3 origin = transform.position;
+        Vector3 dir = Vector3.right * directionX;
         Vector3 endpoint = origin + dir * GetLength(origin, dir, maxLength);
 
         ApplyBeam(origin, endpoint);
         Destroy(gameObject, holdDuration);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MODO B — Animado hacia un Transform objetivo
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // MODE B — Animated towards a Transform target
+    // =========================================================================
 
-    public void InitializeToTarget(
-        Transform spawnPoint,
-        Transform targetPoint,
-        LayerMask layers,
-        float efficiency = 1f)
+    public void InitializeToTarget(Transform spawnPoint, Transform targetPoint, LayerMask layers, float scaledDamage, float scaledStunDuration)
     {
-        SetupStats(layers, efficiency);
+        SetupStats(layers, scaledDamage, scaledStunDuration);
         WarnIfEmpty();
         StartCoroutine(GrowRoutine(spawnPoint, targetPoint));
     }
@@ -115,37 +98,34 @@ public class RayoMortalProjectile : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / growDuration);
 
-            Vector3 origin    = spawnPoint.position;
-            Vector3 toTarget  = targetPoint.position - origin;
+            Vector3 origin = spawnPoint.position;
+            Vector3 toTarget = targetPoint.position - origin;
             Vector3 direction = toTarget.normalized;
-            float   maxDist   = Mathf.Min(toTarget.magnitude, maxLength);
-            Vector3 endpoint  = origin + direction * GetLength(origin, direction, maxDist);
+            float maxDist = Mathf.Min(toTarget.magnitude, maxLength);
+            Vector3 endpoint = origin + direction * GetLength(origin, direction, maxDist);
 
             ApplyBeam(origin, Vector3.Lerp(origin, endpoint, t));
-
             yield return null;
         }
 
-        // Estado final exacto
-        {
-            Vector3 origin    = spawnPoint.position;
-            Vector3 toTarget  = targetPoint.position - origin;
-            Vector3 direction = toTarget.normalized;
-            float   maxDist   = Mathf.Min(toTarget.magnitude, maxLength);
-            Vector3 endpoint  = origin + direction * GetLength(origin, direction, maxDist);
-            ApplyBeam(origin, endpoint);
-        }
-
+        // Ensure exact final state
+        Vector3 finalOrigin = spawnPoint.position;
+        Vector3 finalToTarget = targetPoint.position - finalOrigin;
+        Vector3 finalDirection = finalToTarget.normalized;
+        float finalMaxDist = Mathf.Min(finalToTarget.magnitude, maxLength);
+        Vector3 finalEndpoint = finalOrigin + finalDirection * GetLength(finalOrigin, finalDirection, finalMaxDist);
+        
+        ApplyBeam(finalOrigin, finalEndpoint);
         Destroy(gameObject, holdDuration);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // APLICAR BEAM
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // BEAM APPLICATION
+    // =========================================================================
 
     private void ApplyBeam(Vector3 start, Vector3 end)
     {
-        // Todos los LineRenderers reciben los mismos dos puntos
+        // All LineRenderers receive the same two points
         foreach (LineRenderer lr in allLineRenderers)
         {
             lr.SetPosition(0, start);
@@ -161,43 +141,40 @@ public class RayoMortalProjectile : MonoBehaviour
 
     private void ApplyCollider(Vector3 start, Vector3 end)
     {
-        float   length    = Vector3.Distance(start, end);
-        Vector3 midpoint  = (start + end) * 0.5f;
+        float length = Vector3.Distance(start, end);
+        Vector3 midpoint = (start + end) * 0.5f;
         Vector3 direction = length > 0.001f ? (end - start) / length : Vector3.up;
 
         transform.position = midpoint;
-        transform.up       = direction;
+        transform.up = direction;
 
-        hitbox.size   = new Vector3(colliderWidth, length, colliderDepth);
+        hitbox.size = new Vector3(colliderWidth, length, colliderDepth);
         hitbox.center = Vector3.zero;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
     // OBSTACLE DETECTION
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
 
     private float GetLength(Vector3 origin, Vector3 direction, float maxDist)
     {
         if (obstacleLayers.value == 0)
             return maxDist;
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDist,
-                obstacleLayers, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDist, obstacleLayers, QueryTriggerInteraction.Ignore))
         {
 #if UNITY_EDITOR
             Debug.DrawLine(origin, hit.point, Color.red, holdDuration + growDuration);
-            Debug.Log($"[RayoMortal] Obstáculo: '{hit.collider.name}' " +
-                      $"dist={hit.distance:F2}m");
+            Debug.Log($"[RayoMortal] Obstacle hit: '{hit.collider.name}' at dist={hit.distance:F2}m");
 #endif
             return hit.distance;
         }
-
         return maxDist;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLISIÓN CON TARGETS
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // TARGET COLLISION
+    // =========================================================================
 
     private void OnTriggerEnter(Collider other)
     {
@@ -212,20 +189,24 @@ public class RayoMortalProjectile : MonoBehaviour
         target.ApplyStun(actualStunDuration);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
 
-    private void SetupStats(LayerMask layers, float efficiency)
+    private void SetupStats(LayerMask layers, float scaledDamage, float scaledStunDuration)
     {
-        targetLayers       = layers;
-        actualDamage       = damage       * efficiency;
-        actualStunDuration = stunDuration * efficiency;
-        hasHit             = false;
+        targetLayers = layers;
+        actualDamage = scaledDamage;
+        actualStunDuration = scaledStunDuration;
+        hasHit = false;
     }
+
 
     private void WarnIfEmpty()
     {
         if (obstacleLayers.value == 0)
-            Debug.LogWarning("[RayoMortal] ⚠ 'Obstacle Layers' vacío — " +
-                             "el rayo atravesará muros.", gameObject);
+        {
+            Debug.LogWarning("[RayoMortal] ⚠ 'Obstacle Layers' is empty — the beam will pass through walls.", gameObject);
+        }
     }
 }

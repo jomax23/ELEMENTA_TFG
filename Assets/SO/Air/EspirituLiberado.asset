@@ -12,12 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a63e3708bb5b4e458d57a175e534c884, type: 3}
   m_Name: EspirituLiberado
   m_EditorClassIdentifier: 
-  abilityName: "Esp\xEDritu Liberado"
-  description: "Tu cuerpo se desliga del plano f\xEDsico durante 4 segundos, alterando
-    la percepci\xF3n del campo de batalla con un efecto visual que distorsiona la
-    visi\xF3n del enemigo."
+  abilityName: Unbound Spirit
   element: 3
   icon: {fileID: -690144420, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: MaKes you intangible and activates Spirit Mode for <b>{0:F1}s</b>.
   cooldown: 10
   minRange: 0
   maxRange: 30

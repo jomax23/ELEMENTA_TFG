@@ -1,44 +1,47 @@
 using UnityEngine;
 
+/// <summary>
+/// Area effect that instantly damages and applies knockback to all targets within a radius.
+/// </summary>
 public class ExplosionArea : MonoBehaviour
 {
-    [Header("Explosion Settings")]
-    [SerializeField] private float radius    = 3f;
-    [SerializeField] private float damage    = 15f;
-    [SerializeField] private float pushForce = 10f;
-
     [Header("VFX")]
     [SerializeField] private GameObject explosionVfxPrefab;
 
+    
     private LayerMask targetLayers;
-
-    /// <param name="efficiency">Multiplicador de afinidad (0–1). Escala daño e impulso.</param>
-    public void Initialize(int facingDirection, LayerMask layers, float efficiency = 1f)
+    private float actualDamage;
+    private float actualPushForce;
+    private float radius;
+    
+    /// <summary>
+    /// Initializes the explosion with target layers and scales effects based on affinity efficiency.
+    /// </summary>
+    /// <param name="facingDirection">Unused in this specific implementation, but kept for interface consistency.</param>
+    /// <param name="layers">The layer mask of valid targets.</param>
+    /// <param name="efficiency">Affinity multiplier (0–1). Scales damage and push force.</param>
+    public void Initialize(int facingDirection, LayerMask layers, float scaledDamage, float scaledPushForce)
     {
         targetLayers = layers;
+        actualDamage = scaledDamage;
+        actualPushForce = scaledPushForce;
         SpawnVFX();
-        Explode(efficiency);
+        Explode();
     }
 
-    private void Explode(float efficiency)
+    private void Explode()
     {
-        float actualDamage    = damage    * efficiency;
-        float actualPushForce = pushForce * efficiency;
-
         Collider[] hits = Physics.OverlapSphere(transform.position, radius, targetLayers);
-
         foreach (Collider hit in hits)
         {
-            IAbilityTarget target = hit.GetComponent<IAbilityTarget>();
-            if (target == null) continue;
-
-            target.ApplyDamage(actualDamage);
-
-            float deltaX  = hit.transform.position.x - transform.position.x;
-            int   pushDir = deltaX >= 0f ? 1 : -1;
-            target.ApplyImpulse(pushDir * actualPushForce);
+            if (hit.GetComponent<IAbilityTarget>() is IAbilityTarget target)
+            {
+                target.ApplyDamage(actualDamage);
+                float deltaX = hit.transform.position.x - transform.position.x;
+                int pushDir = deltaX >= 0f ? 1 : -1;
+                target.ApplyImpulse(pushDir * actualPushForce);
+            }
         }
-
         Destroy(gameObject);
     }
 
@@ -47,16 +50,9 @@ public class ExplosionArea : MonoBehaviour
         if (explosionVfxPrefab == null) return;
 
         GameObject vfx = Instantiate(explosionVfxPrefab, transform.position, Quaternion.identity);
-
-        var ps = vfx.GetComponent<ParticleSystem>();
+        ParticleSystem ps = vfx.GetComponent<ParticleSystem>();
+        
+        // Destroy VFX after its main duration, or fallback to 2 seconds
         Destroy(vfx, ps != null ? ps.main.duration : 2f);
     }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, radius);
-    }
-#endif
 }

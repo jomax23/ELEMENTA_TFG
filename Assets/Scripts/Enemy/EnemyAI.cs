@@ -43,10 +43,11 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
 
     // ── Distance Thresholds ────────────────────────────────────────────────
     [Header("Distance Thresholds")]
-    [SerializeField] private float detectionRange = 15f;
+    [SerializeField] private float defaultDetectionRange = 15f;
     [SerializeField] private float meleeRange = 1.8f;
     [SerializeField] private float preferredDistance = 1.3f;
     [SerializeField] private float minimumDistance = 0.7f;
+    private float detectionRange { get; set; }
 
     // ── Melee Attack ───────────────────────────────────────────────────────
     [Header("Melee Attack")]
@@ -80,6 +81,15 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
         enemyBody = GetComponent<EnemyDummy>();
         health = GetComponent<Health>();
 
+        if (GameSession.Instance != null)
+        {
+            detectionRange = GameSession.Instance.EnemyDetectionActive ? 50f : 0f;
+        }
+        else
+        {
+            detectionRange = defaultDetectionRange;
+        }
+
         if (playerTransform == null)
         {
             var player = FindFirstObjectByType<PlayerMovement>();
@@ -89,10 +99,10 @@ public class EnemyAI : MonoBehaviour, IAbilityUser
 
         if (GameSession.Instance != null && GameSession.Instance.EnemyElement != default)
             currentElement = GameSession.Instance.EnemyElement;
-        
+    
         InitializeCooldowns();
         LoadAbilitiesForCurrentElement();
-         
+     
         enemyBody.OnStunApplied += HandleStunApplied;
     }
 

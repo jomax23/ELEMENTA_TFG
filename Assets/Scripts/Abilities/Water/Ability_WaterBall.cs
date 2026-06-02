@@ -1,67 +1,52 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-
-// ──────────────────────────────────────────────────────────────
-// Ráfaga de Agua
-// ──────────────────────────────────────────────────────────────
+/// <summary>
+/// Water ability that fires a burst of multiple water projectiles over time.
+/// Supports interruption via the Cancel method.
+/// </summary>
 [CreateAssetMenu(fileName = "RafagaDeAgua", menuName = "Abilities/Water/Ráfaga de Agua")]
 public class Ability_WaterBall : AbilityData
 {
+    [Header("Stats")]
+    [SerializeField] private float damage = 10f;
+    [SerializeField] private float pushForce = 6f;
+    [SerializeField] private int projectileCount = 3;
+    [SerializeField] private float timeBetweenShots = 0.5f;
+    
     [Header("Projectile")]
     [SerializeField] private WaterBallProjectile projectilePrefab;
+    
+    public override string GetFormattedDescription(float efficiency)
+    {
+        float actualDamage = damage * efficiency;
+        float actualPush = pushForce * efficiency;
 
-    [Header("Burst Settings")]
-    [SerializeField] private int   projectileCount  = 3;
-    [SerializeField] private float timeBetweenShots = 0.5f;
+        return string.Format(descriptionTemplate, projectileCount, actualDamage, actualPush);
 
-    private bool isCancelled;
-
+    }
+    
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
-        if (projectilePrefab == null)
-        {
-            Debug.LogError($"[{nameof(Ability_WaterBall)}] projectilePrefab no asignado.", this);
-            return;
-        }
-
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
-        if (user == null)
-        {
-            Debug.LogError($"[{nameof(Ability_WaterBall)}] IAbilityUser no encontrado en {owner.name}.", owner);
-            return;
-        }
+        if (user == null) return;
 
-        Transform spawnPoint = AbilityData.FindDeep(owner.transform, "RightHandSpawn");
-        if (spawnPoint == null)
-        {
-            Debug.LogError($"[{nameof(Ability_WaterBall)}] RightHandSpawn no encontrado.", owner);
-            return;
-        }
+        Transform spawnPoint = FindDeep(owner.transform, "RightHandSpawn");
+        if (spawnPoint == null) return;
 
-        isCancelled = false;
         user.RunCoroutine(FireBurst(user, spawnPoint, efficiency));
-    }
-
-    public override void Cancel(GameObject owner)
-    {
-        isCancelled = true;
     }
 
     private IEnumerator FireBurst(IAbilityUser user, Transform spawnPoint, float efficiency)
     {
-        int       dirX   = user.FacingDirection;
-        LayerMask layers = user.TargetLayers;
+        float scaledDamage = damage * efficiency;
+        float scaledPush = pushForce * efficiency;
 
         for (int i = 0; i < projectileCount; i++)
         {
-            if (isCancelled) yield break;
-
             WaterBallProjectile proj = Instantiate(projectilePrefab, spawnPoint.position, Quaternion.identity);
-            proj.Initialize(dirX, layers, efficiency);
-
-            if (i < projectileCount - 1)
-                yield return new WaitForSeconds(timeBetweenShots);
+            proj.Initialize(user.FacingDirection, user.TargetLayers, scaledDamage, scaledPush);
+            if (i < projectileCount - 1) yield return new WaitForSeconds(timeBetweenShots);
         }
     }
 }

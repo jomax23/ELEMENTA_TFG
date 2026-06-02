@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0703b993f38c403aa3567b9a1b838580, type: 3}
   m_Name: RafagaDeAgua
   m_EditorClassIdentifier: 
-  abilityName: "R\xE1faga de Agua"
-  description: "Dispara una r\xE1faga de 3 proyectiles de agua en sucesi\xF3n r\xE1pida.
-    Cada uno impacta por 10 de da\xF1o y empuja al objetivo hacia atr\xE1s."
+  abilityName: Water Barrage
   element: 2
   icon: {fileID: -1449946888, guid: 2b84e298dd74d2348b67e2d2dfa0b973, type: 3}
+  descriptionTemplate: Fires <b>{0}</b> projectiles, each dealing <b>{1:F0}</b> damage
+    and KnocKing bacK with <b>{2:F0}</b> force.
   cooldown: 5
   minRange: 3.5
   maxRange: 11
@@ -25,6 +25,8 @@ MonoBehaviour:
   activationDelay: 1
   totalAnimationDuration: 2
   activationSound: {fileID: 11400000, guid: 44a1debce2dbba243b1ddf117092477f, type: 2}
-  projectilePrefab: {fileID: 994275371397674478, guid: 57adfae32a722124c982772dabb10850, type: 3}
+  damage: 10
+  pushForce: 6
   projectileCount: 5
   timeBetweenShots: 0.1
+  projectilePrefab: {fileID: 994275371397674478, guid: 57adfae32a722124c982772dabb10850, type: 3}
