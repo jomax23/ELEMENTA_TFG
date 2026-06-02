@@ -1,41 +1,64 @@
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-using System;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
+/// <summary>
+/// Manages the health state of an entity, updates a UI slider, and triggers events on death.
+/// </summary>
 public class Health : MonoBehaviour
 {
-    public float health;
-    public float maxHealth;
+    [Header("Stats")]
+    [SerializeField] private float maxHealth = 100f;
+    
+    [Header("UI")]
+    [SerializeField] private Slider slider;
 
-    public Slider slider;
+    public float MaxHealth => maxHealth;
+    public float CurrentHealth { get; private set; }
 
     public event Action OnDeath;
-    
+
     private void Awake()
     {
-        health = maxHealth;
-        slider.maxValue = maxHealth;
-        slider.value = health;
+        CurrentHealth = maxHealth;
+        
+        if (slider != null)
+        {
+            slider.maxValue = maxHealth;
+            slider.value = CurrentHealth;
+        }
     }
-    
+
+    /// <summary>
+    /// Reduces health and triggers death if it reaches zero.
+    /// </summary>
     public void TakeDamage(float damage)
     {
-        health -= damage;
-        slider.value = health;
-        if (health <= 0)
+        if (damage <= 0f) return;
+
+        CurrentHealth = Mathf.Max(0f, CurrentHealth - damage);
+        UpdateSlider();
+
+        if (CurrentHealth <= 0f)
         {
-            health = 0;
-            slider.value = 0;
             OnDeath?.Invoke();
         }
     }
-    
+
+    /// <summary>
+    /// Restores health up to the maximum limit.
+    /// </summary>
     public void Heal(float amount)
     {
-        health = Mathf.Min(health + amount, maxHealth);
-        slider.value = health;
+        if (amount <= 0f) return;
+
+        CurrentHealth = Mathf.Min(CurrentHealth + amount, maxHealth);
+        UpdateSlider();
+    }
+
+    private void UpdateSlider()
+    {
+        if (slider != null)
+            slider.value = CurrentHealth;
     }
 }

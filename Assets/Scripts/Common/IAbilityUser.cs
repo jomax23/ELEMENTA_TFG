@@ -1,18 +1,21 @@
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Interface for any entity that can cast/execute abilities 
+/// (e.g., PlayerMovement, EnemyAI). Provides context to the ability system.
+/// </summary>
 public interface IAbilityUser
 {
-    /// <summary>+1 = facing right, -1 = facing left.</summary>
+    /// <summary>+1 = facing right, -1 = facing left. Used to flip projectiles/areas.</summary>
     int FacingDirection { get; }
 
     /// <summary>
-    /// La capa de los objetivos que este caster debe afectar.
-    /// Player → capa del enemigo. Enemy → capa del player.
-    /// Se inyecta en cada área/proyectil al instanciarlo.
+    /// The layer mask of valid targets for this caster. 
+    /// Injected into spawned projectiles/areas to ensure they only hit the correct faction.
     /// </summary>
     LayerMask TargetLayers { get; }
 
-    /// <summary>Runs a coroutine on the caster's MonoBehaviour context.</summary>
+    /// <summary>Runs a coroutine in the context of the caster's MonoBehaviour.</summary>
     void RunCoroutine(IEnumerator routine);
 }

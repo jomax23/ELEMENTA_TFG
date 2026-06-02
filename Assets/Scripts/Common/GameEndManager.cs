@@ -1,9 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System;
 using UnityEngine.SceneManagement;
+using TMPro;
 
+/// <summary>
+/// Singleton that evaluates win/lose conditions and handles the end-game UI.
+/// Listens to both health depletion and the match timer running out.
+/// </summary>
 public class GameEndManager : MonoBehaviour
 {
     public static GameEndManager Instance { get; private set; }
@@ -19,20 +22,28 @@ public class GameEndManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
         if (endPanel != null) endPanel.SetActive(false);
     }
 
     private void Start()
     {
-        // Evento cuando se acaba el tiempo
+        // Listen to match timer ending
         if (MatchController.Instance != null)
             MatchController.Instance.OnMatchEnd += EvaluateByHP;
 
-        // Eventos de muerte
-        if (playerHealth != null) playerHealth.OnDeath += () => EndGame(false, "You have been defeated.");
-        if (enemyHealth != null)  enemyHealth.OnDeath  += () => EndGame(true, "You have defeated the enemy");
+        // Listen to immediate death events
+        if (playerHealth != null) 
+            playerHealth.OnDeath += () => EndGame(false, "You have been defeated.");
+            
+        if (enemyHealth != null) 
+            enemyHealth.OnDeath += () => EndGame(true, "You have defeated the enemy.");
     }
 
     private void OnDestroy()
@@ -41,11 +52,17 @@ public class GameEndManager : MonoBehaviour
             MatchController.Instance.OnMatchEnd -= EvaluateByHP;
     }
 
+    /// <summary>
+    /// Called when the match timer runs out. Compares remaining HP to determine the winner.
+    /// </summary>
     private void EvaluateByHP()
     {
         if (hasEnded) return;
-        bool wins = playerHealth.health > enemyHealth.health;
-        EndGame(wins, wins ? "You have defeated the enemy" : "You have been defeated.");
+
+        bool playerWins = playerHealth.CurrentHealth > enemyHealth.CurrentHealth;
+        string msg = playerWins ? "You have defeated the enemy." : "You have been defeated.";
+        
+        EndGame(playerWins, msg);
     }
 
     private void EndGame(bool victory, string message)
@@ -53,9 +70,10 @@ public class GameEndManager : MonoBehaviour
         if (hasEnded) return;
         hasEnded = true;
 
-        Time.timeScale = 0f; // Pausa total
-        resultText.text = message;
-        endPanel.SetActive(true);
+        Time.timeScale = 0f; // Pause the game
+        
+        if (resultText != null) resultText.text = message;
+        if (endPanel != null) endPanel.SetActive(true);
 
         if (restartButton != null)
             restartButton.onClick.AddListener(RestartGame);

@@ -3,6 +3,11 @@ using UnityEngine.UI;
 using TMPro;
 using System.Linq;
 using UnityEngine.SceneManagement;
+
+/// <summary>
+/// Manages the Abilities Information screen UI.
+/// Handles element selection, ability display, and visual state updates.
+/// </summary>
 public class AbilitiesInfo : MonoBehaviour
 {
     [Header("UI References")]
@@ -10,18 +15,18 @@ public class AbilitiesInfo : MonoBehaviour
     [SerializeField] private Button waterButton;
     [SerializeField] private Button earthButton;
     [SerializeField] private Button airButton;
-    
+
     [SerializeField] private Button abilityButton1;
     [SerializeField] private Button abilityButton2;
     [SerializeField] private Button abilityButton3;
     [SerializeField] private Button abilityButton4;
-    
+
     [SerializeField] private Image abilityIcon1;
     [SerializeField] private Image abilityIcon2;
     [SerializeField] private Image abilityIcon3;
     [SerializeField] private Image abilityIcon4;
 
-    [Header("Ability Info")]
+    [Header("Ability Info Display")]
     [SerializeField] private Image abilityIcon;
     [SerializeField] private TextMeshProUGUI abilityName;
     [SerializeField] private TextMeshProUGUI abilityDescription;
@@ -37,22 +42,19 @@ public class AbilitiesInfo : MonoBehaviour
     [Header("Data")]
     [SerializeField] private ElementAbilitySet[] abilitySets;
 
-    private ElementAbilitySet[] _sets;
     private AbilityData[] _currentAbilities = new AbilityData[4];
     private Button[] _elementButtons;
     private Button[] _abilityButtons;
 
     private void Awake()
     {
-        _sets = abilitySets;
-        
-        _elementButtons = new Button[] { fireButton, waterButton, earthButton, airButton };
-        _abilityButtons = new Button[] { abilityButton1, abilityButton2, abilityButton3, abilityButton4 };
-        
+        _elementButtons = new[] { fireButton, waterButton, earthButton, airButton };
+        _abilityButtons = new[] { abilityButton1, abilityButton2, abilityButton3, abilityButton4 };
+
         SetupElementButtons();
         SetupAbilityButtons();
-        
-        // Seleccionar Fire por defecto
+
+        // Select Fire element by default
         OnElementSelected(ElementType.Fire, fireButton);
     }
 
@@ -74,31 +76,50 @@ public class AbilitiesInfo : MonoBehaviour
 
     private void OnElementSelected(ElementType element, Button selectedButton)
     {
-        var set = _sets.FirstOrDefault(s => s.element == element);
+        var set = abilitySets.FirstOrDefault(s => s.element == element);
         if (set == null) return;
 
-        // Actualizar selección visual de elementos
+        // Update visual selection state of element buttons
         foreach (var btn in _elementButtons)
+        {
             SetButtonSelected(btn, btn == selectedButton);
+        }
 
-        // Guardar habilidades actuales
+        // Store current abilities for this element
         _currentAbilities[0] = set.ability1;
         _currentAbilities[1] = set.ability2;
         _currentAbilities[2] = set.ability3;
         _currentAbilities[3] = set.ability4;
 
-        // Actualizar iconos de botones de habilidad
-        abilityIcon1.sprite = set.ability1?.icon;
-        abilityIcon2.sprite = set.ability2?.icon;
-        abilityIcon3.sprite = set.ability3?.icon;
-        abilityIcon4.sprite = set.ability4?.icon;
+        // Update ability button icons safely
+        UpdateAbilityIcon(abilityIcon1, set.ability1);
+        UpdateAbilityIcon(abilityIcon2, set.ability2);
+        UpdateAbilityIcon(abilityIcon3, set.ability3);
+        UpdateAbilityIcon(abilityIcon4, set.ability4);
 
-        // Actualizar fondo
+        // Update background panel
         UpdateBackground(element);
 
-        // Seleccionar primera habilidad por defecto
+        // Select the first ability by default if it exists
         if (set.ability1 != null)
+        {
             OnAbilitySelected(0);
+        }
+    }
+
+    private void UpdateAbilityIcon(Image iconImage, AbilityData ability)
+    {
+        if (iconImage == null) return;
+        
+        if (ability != null && ability.icon != null)
+        {
+            iconImage.sprite = ability.icon;
+            iconImage.enabled = true;
+        }
+        else
+        {
+            iconImage.enabled = false;
+        }
     }
 
     private void OnAbilitySelected(int index)
@@ -106,20 +127,30 @@ public class AbilitiesInfo : MonoBehaviour
         var ability = _currentAbilities[index];
         if (ability == null) return;
 
-        // Actualizar selección visual
+        // Update visual selection state of ability buttons
         for (int i = 0; i < _abilityButtons.Length; i++)
+        {
             SetButtonSelected(_abilityButtons[i], i == index);
+        }
 
-        // Mostrar info
-        abilityIcon.sprite = ability.icon;
-        abilityName.text = ability.abilityName;
-        abilityDescription.text = ability.description;
+        // Update info display safely
+        if (abilityIcon != null) abilityIcon.sprite = ability.icon;
+        if (abilityName != null) abilityName.text = ability.abilityName;
+        if (abilityDescription != null) abilityDescription.text = ability.description;
     }
 
     private void SetButtonSelected(Button button, bool selected)
     {
-        var image = button.GetComponent<Image>();
+        if (button == null) return;
         
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            // Dim the button when not selected, full opacity when selected
+            Color c = image.color;
+            c.a = selected ? 1f : 0.4f;
+            image.color = c;
+        }
     }
 
     private void UpdateBackground(ElementType element)
@@ -128,13 +159,13 @@ public class AbilitiesInfo : MonoBehaviour
 
         backgroundPanel.sprite = element switch
         {
-            ElementType.Fire  => fireBackground,
+            ElementType.Fire => fireBackground,
             ElementType.Water => waterBackground,
             ElementType.Earth => earthBackground,
-            ElementType.Air   => airBackground,
+            ElementType.Air => airBackground,
             _ => defaultBackground
         };
     }
-    
+
     public void Return() => SceneManager.LoadScene("Scenes/MainMenu");
 }

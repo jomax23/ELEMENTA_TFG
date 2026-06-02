@@ -1,31 +1,30 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 /// <summary>
-/// Añade retroalimentación de audio a cualquier botón de UI Canvas.
-///
-/// Uso:
-///   1. Añade este componente al GameObject del botón.
-///   2. Asigna un SoundData en el Inspector (o deja el default del AudioManager).
-///
-/// También captura el evento OnPointerEnter opcionalmente para un hover suave.
+/// Adds audio feedback to any UI Canvas Button.
+/// Attach this component to a Button GameObject and assign SoundData in the Inspector.
 /// </summary>
 [RequireComponent(typeof(Button))]
 public class ButtonSFX : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
 {
     [Header("Sounds")]
     [SerializeField] private SoundData clickSound;
-    [SerializeField] private SoundData hoverSound;   // opcional
+    [SerializeField] private SoundData hoverSound; // Optional
 
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Triggered when the button is clicked.
+    /// </summary>
     public void OnPointerClick(PointerEventData eventData)
     {
         if (clickSound != null)
             AudioManager.Instance?.PlaySFX(clickSound);
     }
 
+    /// <summary>
+    /// Triggered when the pointer enters the button area (hover).
+    /// </summary>
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (hoverSound != null)

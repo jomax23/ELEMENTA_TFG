@@ -1,58 +1,31 @@
 using UnityEngine;
 
 /// <summary>
-/// Clase base para todos los proyectiles de ELEMENTA.
-///
-/// POR QUÉ RAYCAST EN VEZ DE OnTriggerEnter PARA OBSTÁCULOS:
-///   OnTriggerEnter NO se dispara entre un trigger (proyectil) y un collider
-///   sólido estático sin Rigidbody. Unity requiere al menos un Rigidbody en la
-///   pareja para generar callbacks de física. Los muros del escenario son
-///   colliders estáticos — sin Rigidbody, sin isTrigger — así que los triggers
-///   del proyectil los ignoran por completo.
-///
-///   Raycast sí funciona con cualquier collider independientemente de si tiene
-///   Rigidbody o no, y además evita el tunneling en proyectiles rápidos.
-///
-///   OnTriggerEnter se mantiene SOLO para detectar targets (jugador/enemigo),
-///   donde CharacterController garantiza los callbacks.
-///
-/// SETUP EN LOS PREFABS:
-///   Campo "Obstacle Layers" → asigna las capas de tu geometría de escenario
-///   (ej: "Default", "Ground", "Wall"). Sin esto el proyectil no detecta nada.
+/// Abstract base class for all projectiles.
+/// Uses Raycast for obstacle collision (to avoid physics trigger issues with static colliders)
+/// and OnTriggerEnter for target detection (since targets use CharacterControllers).
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public abstract class ProjectileBase : MonoBehaviour
 {
     [Header("Obstacle Collision")]
-    [Tooltip("Capas que bloquean el proyectil (paredes, suelo, plataformas...).\n" +
-             "No requieren Rigidbody ni isTrigger — el Raycast los detecta igual.")]
+    [Tooltip("Layers that block the projectile (walls, ground, etc.).")]
     [SerializeField] private LayerMask obstacleLayers;
 
-    /// <summary>Asignar en Initialize() de la subclase.</summary>
+    /// <summary>Target layers to be assigned by the subclass during initialization.</summary>
     protected LayerMask targetLayers;
 
-    /// <summary>
-    /// Acceso de solo lectura a obstacleLayers para subclases que necesiten
-    /// hacer sus propios Raycasts (ej: RayoMortalProjectile en Initialize).
-    /// </summary>
+    /// <summary>Read-only access to obstacle layers for subclass custom raycasts.</summary>
     protected LayerMask ObstacleLayers => obstacleLayers;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MOVIMIENTO + DETECCIÓN DE OBSTÁCULOS
-    // ─────────────────────────────────────────────────────────────────────────
-
     /// <summary>
-    /// Mueve el proyectil y comprueba obstáculos con Raycast antes de moverse.
-    ///
-    /// Retorna <c>true</c> si el movimiento fue limpio.
-    /// Retorna <c>false</c> si impactó con un obstáculo (el objeto puede haberse
-    /// destruido — no lo referencies tras recibir false).
+    /// Moves the projectile and checks for obstacles via Raycast before applying the movement.
     /// </summary>
+    /// <returns>True if movement was successful, false if an obstacle was hit.</returns>
     protected bool TryMove(Vector3 direction, float speed)
     {
-        float step      = speed * Time.deltaTime;
-        // Margen adelantado: evita que proyectiles rápidos entren
-        // un fotograma dentro de la geometría antes de detectarla.
+        float step = speed * Time.deltaTime;
+        // Look-ahead margin prevents fast projectiles from tunneling into geometry
         float lookAhead = step + 0.15f;
 
         if (Physics.Raycast(transform.position, direction, lookAhead, obstacleLayers))
@@ -65,36 +38,25 @@ public abstract class ProjectileBase : MonoBehaviour
         return true;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // TARGET DETECTION (triggers siguen funcionando con CharacterController)
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Detects targets overlapping with the projectile's trigger collider.
+    /// </summary>
     protected virtual void OnTriggerEnter(Collider other)
     {
         if (IsInMask(other.gameObject.layer, targetLayers))
             OnTargetHit(other);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // TEMPLATE METHODS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Llamado cuando el raycast detecta un obstáculo.
-    /// Override para añadir VFX/SFX de impacto antes del Destroy.
-    /// </summary>
+    /// <summary>Called when the raycast detects an obstacle. Override to add VFX/SFX.</summary>
     protected virtual void OnObstacleHit()
     {
         Destroy(gameObject);
     }
 
-    /// <summary>
-    /// Llamado cuando el trigger solapa con una capa válida de target.
-    /// </summary>
+    /// <summary>Called when the trigger overlaps with a valid target layer.</summary>
     protected abstract void OnTargetHit(Collider target);
 
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>Helper to check if a layer is included in a LayerMask.</summary>
     protected static bool IsInMask(int layer, LayerMask mask) =>
         (mask.value & (1 << layer)) != 0;
 }

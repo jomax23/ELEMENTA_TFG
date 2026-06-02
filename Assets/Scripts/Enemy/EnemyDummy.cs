@@ -1,89 +1,96 @@
 using UnityEngine;
 using System;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 
+/// <summary>
+/// Handles the physical body, movement, animations, and status effects of the enemy.
+/// Mirrors PlayerMovement but is driven externally by EnemyAI.
+/// </summary>
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Health))]
 [RequireComponent(typeof(Animator))]
 public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
 {
-    // ── Componentes ───────────────────────────────────────────────────────────
+    // ── Components ─────────────────────────────────────────────────────────
     private CharacterController characterController;
-    private Animator            animator;
-    private Health              health;
-    private PlayerArmor           armor;
+    private Animator animator;
+    private Health health;
+    private PlayerArmor armor; // Reused component or enemy-specific armor implementation
     private PlayerAudioController audioController;
-    private DamageFlash         hitFlash;
-    
-    // ── Movimiento ────────────────────────────────────────────────────────────
+    private DamageFlash hitFlash;
+
+    // ── Movement ───────────────────────────────────────────────────────────
     [Header("Movement")]
-    //[SerializeField] private float moveSpeed        = 6f;
-    //[SerializeField] private float sprintMultiplier = 100f;
-    [SerializeField] private float gravity          = -20f;
+    [SerializeField] private float gravity = -20f;
     private float fixedZ;
     private float aiVelocity;
-    
-    // ── Estados especiales ────────────────────────────────────────────────────
-    private bool  horizontalMovementEnabled = true;
-    private bool  isFlying;
-    private bool  isDashing;
+
+    // ── Special States ─────────────────────────────────────────────────────
+    private bool horizontalMovementEnabled = true;
+    private bool isFlying;
+    private bool isDashing;
     private float armorSpeedMultiplier = 1f;
-    
-    // ── Efectos externos ──────────────────────────────────────────────────────
+
+    // ── External Effects ───────────────────────────────────────────────────
     [Header("External Effects")]
-    [SerializeField] private float impulseDecay      = 30f;
+    [SerializeField] private float impulseDecay = 30f;
     [SerializeField] private float slowRecoverySpeed = 2f;
+    
     private float externalImpulse;
     private float slowMultiplier = 1f;
     private float slowTimer;
-    private bool  isStunned;
+    private bool isStunned;
     private float stunTimer;
     private float burnDps;
     private float burnTimer;
-    
-    // ── Combate / Punch ───────────────────────────────────────────────────────
+
+    // ── Combat / Punch ─────────────────────────────────────────────────────
     [SerializeField] private LayerMask targetLayers;
     [SerializeField] private PunchHitbox punchHitbox;
-    [SerializeField] private float       punchTime;
+    [SerializeField] private float punchTime;
     [SerializeField] private float punchHitboxDuration = 0.12f;
-    
-    // ── Habilidades ───────────────────────────────────────────────────────────
+
+    // ── Abilities ──────────────────────────────────────────────────────────
     [Header("Ability Animation")]
     [SerializeField] private float abilityAnimationCrossFade = 0.1f;
     public bool IsIntangible { get; set; }
-    
-    // ── IAbilityTarget / estado público ──────────────────────────────────────
-    //public int       FacingDirection { get; private set; } = 1;
-    public LayerMask TargetLayers    => targetLayers;
-    public bool      IsUsingAbility  { get; private set; }
-    public bool      IsGrounded      => characterController.isGrounded;
-    public bool         IsStunned  => isStunned;
-    public void      RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
+
+    // ── IAbilityTarget / Public State ──────────────────────────────────────
+    public LayerMask TargetLayers => targetLayers;
+    public bool IsUsingAbility { get; private set; }
+    public bool IsGrounded => characterController.isGrounded;
+    public bool IsStunned => isStunned;
+    public Coroutine RunCoroutine(IEnumerator routine) => StartCoroutine(routine);
     public event Action OnStunApplied;
-    
-    // ── Runtime ───────────────────────────────────────────────────────────────
+
+    // ── Runtime Variables ──────────────────────────────────────────────────
     private Vector3 movement;
-    private float   verticalVelocity;
-    
-    // ── Animator hashes ───────────────────────────────────────────────────────
-    private static readonly int AnimIsMoving    = Animator.StringToHash("IsMoving");
+    private float verticalVelocity;
+
+    // ── Animator Hashes ────────────────────────────────────────────────────
+    private static readonly int AnimIsMoving = Animator.StringToHash("IsMoving");
     private static readonly int AnimIsSprinting = Animator.StringToHash("IsSprinting");
-    private static readonly int AnimIsGrounded  = Animator.StringToHash("IsGrounded");
-    private static readonly int AnimIsStunned   = Animator.StringToHash("IsStunned");
-    private static readonly int AnimPunch       = Animator.StringToHash("Punch");
-    private static readonly int AnimSpeed       = Animator.StringToHash("Speed");
-    private HashSet<int> validParams = new();
+    private static readonly int AnimIsGrounded = Animator.StringToHash("IsGrounded");
+    private static readonly int AnimIsStunned = Animator.StringToHash("IsStunned");
+    private static readonly int AnimPunch = Animator.StringToHash("Punch");
+    private static readonly int AnimSpeed = Animator.StringToHash("Speed");
     
+    private HashSet<int> validParams = new();
+
+    // =========================================================================
+    // INITIALIZATION & LIFECYCLE
+    // =========================================================================
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-        animator            = GetComponent<Animator>();
-        health              = GetComponent<Health>();
-        fixedZ              = transform.position.z;
-        armor               = GetComponent<PlayerArmor>();
+        animator = GetComponent<Animator>();
+        health = GetComponent<Health>();
+        fixedZ = transform.position.z;
+        armor = GetComponent<PlayerArmor>();
         hitFlash = GetComponent<DamageFlash>();
-        audioController     = GetComponent<PlayerAudioController>();
+        audioController = GetComponent<PlayerAudioController>();
         
         BuildValidParams();
     }
@@ -101,34 +108,34 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
 
     private void LateUpdate()
     {
+        // Locks Z-axis movement for 2.5D gameplay
         Vector3 pos = transform.position;
         pos.z = fixedZ;
         transform.position = pos;
     }
-    
+
+    /// <summary>
+    /// Caches valid Animator parameters to prevent errors when setting triggers/floats.
+    /// </summary>
     private void BuildValidParams()
     {
         validParams.Clear();
 
         if (animator.runtimeAnimatorController == null)
         {
-            Debug.LogError("[EnemyDummy] El Animator no tiene un Controller asignado.", this);
+            Debug.LogError("[EnemyDummy] Animator has no Controller assigned.", this);
             return;
         }
 
         foreach (AnimatorControllerParameter p in animator.parameters)
             validParams.Add(p.nameHash);
-
-        var sb = new System.Text.StringBuilder("[EnemyDummy] Parámetros del Animator Controller:\n");
-        foreach (AnimatorControllerParameter p in animator.parameters)
-            sb.AppendLine($"  · {p.name}  ({p.type})");
-        Debug.Log(sb.ToString(), this);
     }
 
-    // =========================
-    // MOVEMENT
-    // =========================
+    // =========================================================================
+    // MOVEMENT & GRAVITY
+    // =========================================================================
 
+    /// <summary>Sets the desired velocity from the AI controller.</summary>
     public void SetMoveVelocity(float velocity)
     {
         aiVelocity = velocity * slowMultiplier;
@@ -137,32 +144,30 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
     private void HandleMovement()
     {
         bool canMove = horizontalMovementEnabled && !IsUsingAbility && !isStunned;
-
         float baseSpeed = slowMultiplier * armorSpeedMultiplier;
 
-        movement.x = canMove
-            ? (aiVelocity * baseSpeed) + externalImpulse
-            : externalImpulse;
-
+        movement.x = canMove ? (aiVelocity * baseSpeed) + externalImpulse : externalImpulse;
         movement.y = verticalVelocity;
         movement.z = 0f;
 
         characterController.Move(movement * Time.deltaTime);
     }
-    
-    
+
     private void HandleGravity()
     {
         if (characterController.isGrounded)
         {
-            if (verticalVelocity < 0f)
-                verticalVelocity = -2f;
+            if (verticalVelocity < 0f) verticalVelocity = -2f;
         }
         else
         {
             verticalVelocity += gravity * Time.deltaTime;
         }
     }
+
+    // =========================================================================
+    // COMBAT (PUNCH)
+    // =========================================================================
 
     public IEnumerator PunchRoutine()
     {
@@ -178,66 +183,49 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
 
         IsUsingAbility = false;
     }
-    // =========================
-    // ANIMATIONS
-    // =========================
 
-    public void SetUsingAbility(bool value)
-    {
-        IsUsingAbility = value;
-    }
-    
-    public void CancelAbilityAnimation()
-    {
-        IsUsingAbility = false;
-    }
-    
+    // =========================================================================
+    // ANIMATIONS
+    // =========================================================================
+
+    public void SetUsingAbility(bool value) => IsUsingAbility = value;
+
+    public void CancelAbilityAnimation() => IsUsingAbility = false;
+
     public void PlayAbilityAnimation(string stateName)
     {
         if (string.IsNullOrEmpty(stateName)) return;
         IsUsingAbility = true;
         animator.CrossFade(stateName, abilityAnimationCrossFade);
     }
-    
+
     private void UpdateAnimator()
     {
         animator.SetBool(AnimIsStunned, isStunned);
         
-        if (isFlying)
+        if (isFlying || isDashing)
         {
-            animator.SetBool(AnimIsGrounded,  false);
-            animator.SetBool(AnimIsMoving,    false);
-            animator.SetBool(AnimIsSprinting, false);
-            return;
-        }
-        
-        if (isDashing)
-        {
-            animator.SetBool(AnimIsGrounded,  false);
-            animator.SetBool(AnimIsMoving,    false);
+            animator.SetBool(AnimIsGrounded, false);
+            animator.SetBool(AnimIsMoving, false);
             animator.SetBool(AnimIsSprinting, false);
             return;
         }
         
         if (IsUsingAbility || isStunned) return;
         
-        float speed      = Mathf.Abs(aiVelocity);
-        bool  isMoving   = speed > 0.1f;
-        bool  isSprinting = speed > 4f;
+        float speed = Mathf.Abs(aiVelocity);
+        bool isMoving = speed > 0.1f;
+        bool isSprinting = speed > 4f;
         
-        SafeSetFloat(AnimSpeed,       speed);
-        animator.SetBool(AnimIsMoving,    isMoving);
+        SafeSetFloat(AnimSpeed, speed);
+        animator.SetBool(AnimIsMoving, isMoving);
         animator.SetBool(AnimIsSprinting, isSprinting);
-        animator.SetBool(AnimIsGrounded,  characterController.isGrounded);
+        animator.SetBool(AnimIsGrounded, characterController.isGrounded);
     }
 
-    public void PlayAttack()
-    {
-        SafeSetTrigger(AnimPunch);
-    }
+    public void PlayAttack() => SafeSetTrigger(AnimPunch);
 
-    // ── Safe wrappers ──────────────────────────────────────────────────────────
-
+    // ── Safe Animator Wrappers ─────────────────────────────────────────────
     private void SafeSetFloat(int hash, float value)
     {
         if (validParams.Contains(hash)) animator.SetFloat(hash, value);
@@ -248,12 +236,12 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
         if (validParams.Contains(hash))
             animator.SetTrigger(hash);
         else
-            Debug.LogWarning($"[EnemyDummy] Trigger hash {hash} no existe en el Animator Controller.", this);
+            Debug.LogWarning($"[EnemyDummy] Trigger hash {hash} does not exist in the Animator Controller.", this);
     }
 
-    // =========================
-    // EFFECTS
-    // =========================
+    // =========================================================================
+    // EXTERNAL EFFECTS HANDLING
+    // =========================================================================
 
     private void HandleExternalImpulse()
     {
@@ -263,12 +251,16 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
     private void HandleSlow()
     {
         if (slowTimer > 0f)
+        {
             slowTimer -= Time.deltaTime;
+        }
         else
+        {
             slowMultiplier = Mathf.MoveTowards(slowMultiplier, 1f, slowRecoverySpeed * Time.deltaTime);
+        }
     }
 
-    private void HandleStun()
+    private void HandleStun() 
     {
         if (!isStunned) return;
         stunTimer -= Time.deltaTime;
@@ -282,31 +274,26 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
         ApplyDamage(burnDps * Time.deltaTime);
     }
 
-    // =========================
-    // IAbilityTarget
-    // =========================
+    // =========================================================================
+    // IAbilityTarget IMPLEMENTATION
+    // =========================================================================
 
     public void ApplyImpulse(float force)
     {
         if (IsIntangible) return;
-        
-        externalImpulse += armor != null && armor.IsActive ? force * 0.5f : force;
+        externalImpulse += (armor != null && armor.IsActive) ? force * 0.5f : force;
     }
 
     public void ApplySlow(float multiplier, float duration)
     {
-        if (IsIntangible) return;
-        
-        if (armor != null && armor.IsActive) return;
+        if (IsIntangible || (armor != null && armor.IsActive)) return;
         slowMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
-        slowTimer      = duration;
+        slowTimer = duration;
     }
 
     public void ApplyStun(float duration)
     {
-        if (IsIntangible) return;
-        
-        if (armor != null && armor.IsActive) return;
+        if (IsIntangible || (armor != null && armor.IsActive)) return;
         isStunned = true;
         stunTimer = duration;
         OnStunApplied?.Invoke(); 
@@ -316,10 +303,7 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
     {
         if (IsIntangible) return;
         
-        float finalDamage = armor != null && armor.IsActive
-            ? armor.AbsorbDamage(damage)
-            : damage;
-        
+        float finalDamage = (armor != null && armor.IsActive) ? armor.AbsorbDamage(damage) : damage;
         health.TakeDamage(finalDamage);
 
         if (type == DamageType.Punch)
@@ -331,16 +315,14 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
 
     public void ApplyBurn(float damagePerSecond, float duration)
     {
-        if (IsIntangible) return;
-        
-        if (armor != null && armor.IsActive) return;
-        burnDps   = damagePerSecond;
+        if (IsIntangible || (armor != null && armor.IsActive)) return;
+        burnDps = damagePerSecond;
         burnTimer = duration;
     }
-    
-    // =========================
-    // EXTERNAL CONTROL
-    // =========================
+
+    // =========================================================================
+    // EXTERNAL CONTROL API
+    // =========================================================================
 
     public void SetArmorSpeedMultiplier(float multiplier) => armorSpeedMultiplier = multiplier;
 
@@ -349,5 +331,4 @@ public class EnemyDummy : MonoBehaviour, IAbilityTarget, IArmorUser
         isFlying = flying;
         if (!flying) verticalVelocity = 0f;
     }
-
 }

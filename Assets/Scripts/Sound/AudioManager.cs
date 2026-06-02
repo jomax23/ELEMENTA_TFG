@@ -3,54 +3,35 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Singleton persistente entre escenas.
-///
-/// Responsabilidades:
-///   - Música / sonido ambiente: un AudioSource dedicado con fade-in/out.
-///   - SFX: pool de AudioSources para reproducir efectos solapados simultáneamente.
-///   - Lógica de escena: cambia la música automáticamente según la escena cargada.
-///
-/// Uso:
-///   AudioManager.Instance.PlaySFX(soundData);
-///   AudioManager.Instance.PlayMusic(soundData);
-///   AudioManager.Instance.StopMusic(fadeDuration: 0.5f);
+/// Persistent Singleton managing background music and SFX.
+/// - Music: Dedicated AudioSource with crossfade support.
+/// - SFX: Object pool of AudioSources for simultaneous overlapping effects.
+/// - Scene Logic: Automatically switches music based on the loaded scene.
 /// </summary>
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // INSPECTOR
-    // ─────────────────────────────────────────────────────────────────────────
-
     [Header("Music")]
     [SerializeField] private SoundData menuAmbientSound;
     [SerializeField] private SoundData gameMusic;
-    [SerializeField] private float     musicFadeDuration = 1f;
+    [SerializeField] private float musicFadeDuration = 1f;
 
     [Header("Scene Names")]
-    [Tooltip("Nombre exacto de la escena principal de combate (ej: 'Map1').")]
+    [Tooltip("Exact name of the main gameplay scene (e.g., 'Map1').")]
     [SerializeField] private string gameSceneName = "Map1";
 
     [Header("SFX Pool Size")]
     [SerializeField] private int sfxPoolSize = 8;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private AudioSource   musicSource;
+    private AudioSource musicSource;
     private AudioSource[] sfxPool;
-    private int           sfxPoolIndex;
-
+    private int sfxPoolIndex;
     private Coroutine fadeCoroutine;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // INIT
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void Awake()
     {
+        // Singleton initialization
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -59,59 +40,57 @@ public class AudioManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
         BuildAudioSources();
     }
 
-    private void OnEnable()  => SceneManager.sceneLoaded += OnSceneLoaded;
+    private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
     private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
 
+    /// <summary>
+    /// Initializes the music and SFX AudioSources at runtime.
+    /// </summary>
     private void BuildAudioSources()
     {
-        // ── Fuente de música ──────────────────────────────────────────────────
-        musicSource          = gameObject.AddComponent<AudioSource>();
-        musicSource.loop     = true;
+        // Music Source
+        musicSource = gameObject.AddComponent<AudioSource>();
+        musicSource.loop = true;
         musicSource.playOnAwake = false;
 
-        // ── Pool de SFX ───────────────────────────────────────────────────────
+        // SFX Pool
         sfxPool = new AudioSource[sfxPoolSize];
         for (int i = 0; i < sfxPoolSize; i++)
         {
-            AudioSource src    = gameObject.AddComponent<AudioSource>();
-            src.loop           = false;
-            src.playOnAwake    = false;
-            sfxPool[i]         = src;
+            AudioSource src = gameObject.AddComponent<AudioSource>();
+            src.loop = false;
+            src.playOnAwake = false;
+            sfxPool[i] = src;
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // SCENE CHANGE
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Handles scene load events to switch music automatically.
+    /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         bool isGameScene = scene.name == gameSceneName;
 
         if (isGameScene)
         {
-            // Escena de juego: cruzar fundido al tema de combate.
             PlayMusic(gameMusic);
         }
         else
         {
-            // Menú principal, Info, Configuración…
-            // Solo cambia si la música de ambiente no está ya sonando
-            // (evita cortar entre menús de la misma "zona").
+            // Play menu ambient only if it's not already playing
             if (!IsMusicPlaying(menuAmbientSound))
                 PlayMusic(menuAmbientSound);
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MUSIC API
-    // ─────────────────────────────────────────────────────────────────────────
+    #region Music API
 
-    /// <summary>Reproduce una música con fade-out del tema anterior y fade-in del nuevo.</summary>
+    /// <summary>
+    /// Plays a music track with a crossfade from the current track.
+    /// </summary>
     public void PlayMusic(SoundData data)
     {
         if (data == null) return;
@@ -122,14 +101,16 @@ public class AudioManager : MonoBehaviour
         fadeCoroutine = StartCoroutine(CrossfadeMusic(data));
     }
 
-    /// <summary>Para la música con fade.</summary>
+    /// <summary>
+    /// Stops the music with a fade-out effect.
+    /// </summary>
     public void StopMusic(float fadeDuration = -1f)
     {
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
 
-        float dur = fadeDuration >= 0f ? fadeDuration : musicFadeDuration;
-        fadeCoroutine = StartCoroutine(FadeOutMusic(dur));
+        float duration = fadeDuration >= 0f ? fadeDuration : musicFadeDuration;
+        fadeCoroutine = StartCoroutine(FadeOutMusic(duration));
     }
 
     private IEnumerator CrossfadeMusic(SoundData data)
@@ -139,25 +120,24 @@ public class AudioManager : MonoBehaviour
 
         float targetVolume = data.GetVolume();
 
-        // ── Fade-out del tema actual ──────────────────────────────────────────
+        // Fade out current track
         if (musicSource.isPlaying)
         {
             float startVol = musicSource.volume;
-            float elapsed  = 0f;
+            float elapsed = 0f;
 
             while (elapsed < musicFadeDuration)
             {
-                elapsed           += Time.unscaledDeltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 musicSource.volume = Mathf.Lerp(startVol, 0f, elapsed / musicFadeDuration);
                 yield return null;
             }
-
             musicSource.Stop();
         }
 
-        // ── Fade-in del tema nuevo ────────────────────────────────────────────
-        musicSource.clip   = clip;
-        musicSource.pitch  = data.GetPitch();
+        // Configure and fade in new track
+        musicSource.clip = clip;
+        musicSource.pitch = data.GetPitch();
         musicSource.volume = 0f;
 
         if (data.mixerGroup != null)
@@ -165,11 +145,11 @@ public class AudioManager : MonoBehaviour
 
         musicSource.Play();
 
-        float elapsed2 = 0f;
-        while (elapsed2 < musicFadeDuration)
+        float elapsedIn = 0f;
+        while (elapsedIn < musicFadeDuration)
         {
-            elapsed2          += Time.unscaledDeltaTime;
-            musicSource.volume = Mathf.Lerp(0f, targetVolume, elapsed2 / musicFadeDuration);
+            elapsedIn += Time.unscaledDeltaTime;
+            musicSource.volume = Mathf.Lerp(0f, targetVolume, elapsedIn / musicFadeDuration);
             yield return null;
         }
 
@@ -179,11 +159,11 @@ public class AudioManager : MonoBehaviour
     private IEnumerator FadeOutMusic(float duration)
     {
         float startVol = musicSource.volume;
-        float elapsed  = 0f;
+        float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            elapsed           += Time.unscaledDeltaTime;
+            elapsed += Time.unscaledDeltaTime;
             musicSource.volume = Mathf.Lerp(startVol, 0f, elapsed / duration);
             yield return null;
         }
@@ -194,18 +174,15 @@ public class AudioManager : MonoBehaviour
 
     private bool IsMusicPlaying(SoundData data)
     {
-        return data != null
-            && musicSource.isPlaying
-            && musicSource.clip == data.GetClip();
+        return data != null && musicSource.isPlaying && musicSource.clip == data.GetClip();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // SFX API
-    // ─────────────────────────────────────────────────────────────────────────
+    #endregion
+
+    #region SFX API
 
     /// <summary>
-    /// Reproduce un SFX desde el pool (round-robin).
-    /// Si todos los sources están ocupados, reutiliza el más antiguo.
+    /// Plays a 2D SFX using the object pool (round-robin).
     /// </summary>
     public void PlaySFX(SoundData data)
     {
@@ -215,20 +192,16 @@ public class AudioManager : MonoBehaviour
         if (clip == null) return;
 
         AudioSource source = GetNextSFXSource();
-
-        source.clip   = clip;
+        source.clip = clip;
         source.volume = data.GetVolume();
-        source.pitch  = data.GetPitch();
-
-        if (data.mixerGroup != null)
-            source.outputAudioMixerGroup = data.mixerGroup;
+        source.pitch = data.GetPitch();
+        source.outputAudioMixerGroup = data.mixerGroup; // Null assignment is safe and clears previous mixer if needed
 
         source.Play();
     }
 
     /// <summary>
-    /// Reproduce un SFX en una posición 3D del mundo.
-    /// Usa AudioSource.PlayClipAtPoint para no consumir el pool.
+    /// Plays a 3D SFX at a specific world position without using the pool.
     /// </summary>
     public void PlaySFXAtPoint(SoundData data, Vector3 worldPosition)
     {
@@ -240,9 +213,13 @@ public class AudioManager : MonoBehaviour
         AudioSource.PlayClipAtPoint(clip, worldPosition, data.GetVolume());
     }
 
+    /// <summary>
+    /// Retrieves the next available AudioSource from the pool.
+    /// Falls back to round-robin if all sources are currently playing.
+    /// </summary>
     private AudioSource GetNextSFXSource()
     {
-        // Preferir sources que no estén sonando.
+        // Look for an idle source
         for (int i = 0; i < sfxPool.Length; i++)
         {
             int idx = (sfxPoolIndex + i) % sfxPool.Length;
@@ -253,15 +230,23 @@ public class AudioManager : MonoBehaviour
             }
         }
 
-        // Todos ocupados: reutilizar el siguiente en round-robin.
+        // Fallback: reuse the next source in round-robin order
         AudioSource fallback = sfxPool[sfxPoolIndex];
         sfxPoolIndex = (sfxPoolIndex + 1) % sfxPool.Length;
         return fallback;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // VOLUME CONTROL (para settings)
-    // ─────────────────────────────────────────────────────────────────────────
+    #endregion
 
-    public void SetMusicVolume(float volume) => musicSource.volume = Mathf.Clamp01(volume);
+    #region Volume Control
+
+    /// <summary>
+    /// Updates the global music volume (useful for settings menu).
+    /// </summary>
+    public void SetMusicVolume(float volume) 
+    {
+        musicSource.volume = Mathf.Clamp01(volume);
+    }
+
+    #endregion
 }

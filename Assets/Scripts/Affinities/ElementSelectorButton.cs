@@ -3,49 +3,57 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Componente auxiliar adjunto a cada botón de elemento en el selector.
-/// Se encarga del estado visual (seleccionado / no seleccionado).
-/// Solo modifica el icono del elemento y el texto.
+/// Auxiliary component attached to each element button in the selector.
+/// Handles the visual state (selected / unselected) by modifying the element icon and text.
 /// </summary>
 public class ElementSelectorButton : MonoBehaviour
 {
+    [Header("UI References")]
     [SerializeField] private Image elementIcon;
     [SerializeField] private TextMeshProUGUI labelText;
 
     private System.Action onClickCallback;
     private Color selectedColor;
     private Color unselectedColor;
+    private Button button;
 
-    public void Initialize(
-        ElementType element,
-        Color        unselected,
-        Color        selected,
-        System.Action onClick)
+    private void Awake()
     {
-        selectedColor   = selected;
+        // Cache the Button component to avoid runtime allocation
+        button = GetComponent<Button>();
+    }
+
+    /// <summary>
+    /// Initializes the button with element data, colors, and click callback.
+    /// </summary>
+    public void Initialize(ElementType element, Color unselected, Color selected, System.Action onClick)
+    {
+        selectedColor = selected;
         unselectedColor = unselected;
         onClickCallback = onClick;
 
         if (labelText != null)
             labelText.text = element.ToString().ToUpper();
 
-        // Evita cualquier tintado automático del Button sobre gráficos de fondo.
-        Button btn = GetComponent<Button>();
-        if (btn != null)
+        if (button != null)
         {
-            btn.transition = Selectable.Transition.None;
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => onClickCallback?.Invoke());
+            // Disable default button transition to prevent color tinting conflicts
+            button.transition = Selectable.Transition.None;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => onClickCallback?.Invoke());
         }
 
         SetSelected(false);
     }
 
+    /// <summary>
+    /// Updates the visual state of the button based on selection.
+    /// </summary>
     public void SetSelected(bool isSelected)
     {
-        Color c = isSelected ? selectedColor : unselectedColor;
+        Color targetColor = isSelected ? selectedColor : unselectedColor;
 
-        if (elementIcon != null) elementIcon.color = c;
-        if (labelText != null)   labelText.color   = c;
+        if (elementIcon != null) elementIcon.color = targetColor;
+        if (labelText != null) labelText.color = targetColor;
     }
 }

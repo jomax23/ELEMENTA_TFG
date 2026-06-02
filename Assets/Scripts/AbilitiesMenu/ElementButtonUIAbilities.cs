@@ -1,20 +1,37 @@
-// ElementButtonUI.cs
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using System;
 
+/// <summary>
+/// UI component for an element selection button in the Abilities Info screen.
+/// Triggers a registered callback when clicked.
+/// </summary>
 public class ElementButtonUIAbilities : MonoBehaviour
 {
     private ElementType _element;
-    private System.Action _onClick;
+    private Action _onClick;
+    private Button _button;
 
-    public void Init(ElementType element, System.Action onClick)
+    private void Awake()
+    {
+        // Cache the Button component to avoid runtime allocation
+        _button = GetComponent<Button>();
+    }
+
+    /// <summary>
+    /// Initializes the button with the element type and click callback.
+    /// </summary>
+    public void Init(ElementType element, Action onClick)
     {
         _element = element;
         _onClick = onClick;
-        GetComponent<Button>().onClick.AddListener(TriggerClick);
+        
+        if (_button != null)
+        {
+            _button.onClick.RemoveAllListeners(); // Prevent duplicate listeners if Init is called multiple times
+            _button.onClick.AddListener(TriggerClick);
+        }
     }
 
     private void TriggerClick() => _onClick?.Invoke();
-    
 }

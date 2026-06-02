@@ -2,50 +2,36 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Gestiona el menú principal.
-///
-/// CAMBIO vs versión anterior:
-///   Play() ya no carga directamente Map1. En su lugar, carga la escena de selección
-///   de elemento (ElementSelector) donde el jugador elige su elemento principal.
-///   La escena de juego se carga desde <see cref="ElementSelectorMenuController.OnPlayPressed"/>.
+/// Manages navigation from the Main Menu.
+/// Note: Play() loads the Element Selector scene instead of the gameplay scene directly.
 /// </summary>
 public class MainMenuManager : MonoBehaviour
 {
     [Header("Scene Names")]
     [SerializeField] private string elementSelectorSceneName = "Scenes/ElementSelector";
-    [SerializeField] private string infoSceneName            = "Scenes/Info";
-    [SerializeField] private string tutorialSceneName            = "Scenes/Tutorial";
-    [SerializeField] private string abilitiesSceneName            = "Scenes/Abilities";
-
-    // ──────────────────────────────────────────────────────────────────────────
+    [SerializeField] private string infoSceneName = "Scenes/Info";
+    [SerializeField] private string tutorialSceneName = "Scenes/Tutorial";
+    [SerializeField] private string abilitiesSceneName = "Scenes/Abilities";
 
     /// <summary>
-    /// Carga la pantalla de selección de elemento.
-    /// Desde allí el jugador elige su elemento principal y pulsa Play.
+    /// Resets the current game session and loads the element selection screen.
     /// </summary>
     public void Play()
     {
-        // Resetear sesión anterior (por si el jugador vuelve del juego)
         GameSession.Instance?.ResetSession();
-
         SceneManager.LoadScene(elementSelectorSceneName);
     }
 
-    public void Info()
-    {
-        SceneManager.LoadScene(infoSceneName);
-    }
-    
-    public void Tutorial()
-    {
-        SceneManager.LoadScene(tutorialSceneName);
-    }
-    
-    public void Abilities()
-    {
-        SceneManager.LoadScene(abilitiesSceneName);
-    }
+    /// <summary>Loads the Information/About screen.</summary>
+    public void Info() => SceneManager.LoadScene(infoSceneName);
 
+    /// <summary>Loads the Tutorial screen.</summary>
+    public void Tutorial() => SceneManager.LoadScene(tutorialSceneName);
+
+    /// <summary>Loads the Abilities explanation screen.</summary>
+    public void Abilities() => SceneManager.LoadScene(abilitiesSceneName);
+
+    /// <summary>Quits the game or stops play mode in the Editor.</summary>
     public void Salir()
     {
 #if UNITY_EDITOR

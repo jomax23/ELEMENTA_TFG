@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// Triggers a visual flash effect on the entity's renderers when taking damage.
+/// Uses MaterialPropertyBlock to avoid creating material instances at runtime.
+/// </summary>
 public class DamageFlash : MonoBehaviour
 {
     [Header("Flash Settings")]
@@ -10,10 +14,10 @@ public class DamageFlash : MonoBehaviour
 
     private Renderer[] renderers;
     private MaterialPropertyBlock mpb;
-
-    private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
-
     private Coroutine flashRoutine;
+
+    // Cached Shader Property ID to avoid string lookups
+    private static readonly int EmissionColorID = Shader.PropertyToID("_EmissionColor");
 
     private void Awake()
     {
@@ -21,6 +25,9 @@ public class DamageFlash : MonoBehaviour
         mpb = new MaterialPropertyBlock();
     }
 
+    /// <summary>
+    /// Starts the flash effect. Restarts the timer if called multiple times rapidly.
+    /// </summary>
     public void TriggerFlash()
     {
         if (flashRoutine != null)
@@ -34,6 +41,7 @@ public class DamageFlash : MonoBehaviour
         SetFlash(true);
         yield return new WaitForSeconds(flashDuration);
         SetFlash(false);
+        flashRoutine = null;
     }
 
     private void SetFlash(bool enabled)
@@ -43,7 +51,7 @@ public class DamageFlash : MonoBehaviour
         foreach (var r in renderers)
         {
             r.GetPropertyBlock(mpb);
-            mpb.SetColor(EmissionColor, finalColor);
+            mpb.SetColor(EmissionColorID, finalColor);
             r.SetPropertyBlock(mpb);
         }
     }
