@@ -9,17 +9,14 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 3da888c8ea8e4fb43bc72a4916f4e14b
   - enabled: 1
-    path: Assets/Scenes/ElementSelector.unity
-    guid: e5696c3d7b5ec86469ef1fc490e9a995
-  - enabled: 1
     path: Assets/Scenes/Abilities.unity
     guid: e8fa072b8c95c404c951879c5ad65ac0
   - enabled: 1
     path: Assets/Scenes/Tutorial.unity
     guid: da6e374eab2bb524a9b2e0ab80f7f21f
   - enabled: 1
-    path: Assets/Scenes/Info.unity
-    guid: 2a2a735fbb0e1d84c8605e5fbb10bf79
+    path: Assets/Scenes/ElementSelector.unity
+    guid: e5696c3d7b5ec86469ef1fc490e9a995
   - enabled: 1
     path: Assets/Scenes/Map1.unity
     guid: 99c9720ab356a0642a771bea13969a05
