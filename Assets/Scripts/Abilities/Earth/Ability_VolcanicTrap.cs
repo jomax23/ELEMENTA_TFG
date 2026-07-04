@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Earth ability that spawns a volcanic trap in front of the user.
-/// The trap's effects are scaled by the elemental affinity efficiency.
-/// </summary>
+// Spawns a lingering hazard that deals damage over time.
+// All stats scale with the player's elemental affinity.
 [CreateAssetMenu(fileName = "TrampaVolcanica", menuName = "Abilities/Earth/Trampa Volcánica")]
 public class Ability_VolcanicTrap : AbilityData
 {
@@ -20,9 +18,8 @@ public class Ability_VolcanicTrap : AbilityData
         float actualDps = damagePerSecond * efficiency;
         float actualLifetime = lifetime * efficiency;
         return string.Format(descriptionTemplate, actualDps, actualLifetime);
-
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         if (trapPrefab == null)
@@ -38,14 +35,14 @@ public class Ability_VolcanicTrap : AbilityData
             return;
         }
 
+        // Calculate the exact spawn position based on player facing
         Vector3 spawnPos = owner.transform.position;
         spawnPos.x += user.FacingDirection * spawnOffsetX;
 
-        // Calculate scaled stats
+        // Pre-scale the values so the prefab doesn't need to know about efficiency
         float scaledDps = damagePerSecond * efficiency;
         float scaledLifetime = lifetime * efficiency;
 
-        // Pass pre-scaled values to the trap prefab
         TrampaVolcanicaArea trap = Instantiate(trapPrefab, spawnPos, Quaternion.Euler(-90f, 0f, 0f));
         trap.Initialize(user.TargetLayers, scaledDps, scaledLifetime);
     }

@@ -1,10 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Handles the player's flight mechanics, including the initial lift-off phase 
-/// and the sustained vertical movement controlled by player input.
-/// </summary>
+// Handles the two phases of flight: the initial curve-based lift-off, 
+// and the sustained input-controlled hovering.
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(PlayerMovement))]
 public class PlayerFlight : MonoBehaviour
@@ -38,9 +36,6 @@ public class PlayerFlight : MonoBehaviour
             Debug.LogError($"[{nameof(PlayerFlight)}] verticalMoveAction not assigned.", this);
     }
 
-    /// <summary>
-    /// Begins the flight sequence, disabling gravity and starting the lift-off phase.
-    /// </summary>
     public void StartFlight(float duration)
     {
         if (isFlying) return;
@@ -52,21 +47,18 @@ public class PlayerFlight : MonoBehaviour
         flightTimer = duration;
 
         movement.SetGravityEnabled(false);
-        movement.SetFlying(true); // Locks jump and forces the Flying animation
+        movement.SetFlying(true); // Locks jump and forces the Flying animation state
     }
 
-    /// <summary>
-    /// Ends the flight sequence and restores normal gravity and animator states.
-    /// </summary>
     public void EndFlight()
     {
         if (!isFlying) return;
 
         isFlying = false;
         isLifting = false;
-
+        
         movement.SetGravityEnabled(true);
-        movement.SetFlying(false); // Returns normal control to the animator
+        movement.SetFlying(false); 
     }
 
     private void Update()
@@ -77,19 +69,19 @@ public class PlayerFlight : MonoBehaviour
         if (isLifting)
         {
             liftTimer -= Time.deltaTime;
-
             float t = 1f - (liftTimer / liftDuration);
+            
+            // Evaluate the curve for a snappy upward boost
             float curveValue = liftCurve.Evaluate(t);
-
             float targetY = startY + (curveValue * liftForce);
             float deltaY = targetY - transform.position.y;
-
+            
             controller.Move(Vector3.up * deltaY);
 
             // Interrupt lift-off early if the player provides input or time runs out
             if (HasInput() || liftTimer <= 0f)
                 isLifting = false;
-
+            
             return;
         }
 
@@ -104,6 +96,7 @@ public class PlayerFlight : MonoBehaviour
     private void ApplyVerticalInput()
     {
         if (verticalMoveAction == null) return;
+        
         float input = verticalMoveAction.action.ReadValue<float>();
         controller.Move(Vector3.up * input * verticalSpeed * Time.deltaTime);
     }

@@ -3,10 +3,8 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using System.Collections;
 
-/// <summary>
-/// Controls global post-processing effects during specific abilities (e.g., Spirit Mode).
-/// Acts as a scene singleton. Clones the Volume profile on Awake to prevent mutating the shared asset.
-/// </summary>
+// Scene singleton for global post-processing. 
+// We clone the Volume profile on Awake so we don't accidentally mutate the shared asset on disk.
 public class SceneEffectsController : MonoBehaviour
 {
     public static SceneEffectsController Instance { get; private set; }
@@ -17,6 +15,7 @@ public class SceneEffectsController : MonoBehaviour
     private ColorAdjustments color;
     private DepthOfField dof;
 
+    // Cached baseline values to revert to when disabling effects
     private float originalExposure;
     private float originalSaturation;
     private float originalContrast;
@@ -27,7 +26,6 @@ public class SceneEffectsController : MonoBehaviour
 
     private void Awake()
     {
-        // Scene singleton: does not persist between scenes
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -41,10 +39,10 @@ public class SceneEffectsController : MonoBehaviour
             return;
         }
 
-        // CRITICAL: Clone the profile to avoid mutating the shared asset on disk.
+        // Clone the profile to keep the original asset clean
         globalVolume.profile = Instantiate(globalVolume.profile);
-
         VolumeProfile profile = globalVolume.profile;
+        
         profile.TryGet(out color);
         profile.TryGet(out dof);
 
@@ -59,8 +57,7 @@ public class SceneEffectsController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (Instance == this)
-            Instance = null;
+        if (Instance == this) Instance = null;
     }
 
     private void CacheOriginalValues()
@@ -87,9 +84,8 @@ public class SceneEffectsController : MonoBehaviour
         float targetExposure, float targetSaturation, float targetContrast,
         bool enableDOF, float targetBlur)
     {
-        if (transitionRoutine != null)
-            StopCoroutine(transitionRoutine);
-
+        if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+        
         transitionRoutine = StartCoroutine(
             TransitionRoutine(targetExposure, targetSaturation, targetContrast, enableDOF, targetBlur));
     }
@@ -110,16 +106,15 @@ public class SceneEffectsController : MonoBehaviour
         }
 
         float elapsed = 0f;
-
         while (elapsed < transitionDuration)
         {
-            // SmoothStep for a more natural transition than linear lerp
+            // SmoothStep gives a much nicer ease-in/ease-out feel than a standard linear lerp
             float t = Mathf.SmoothStep(0f, 1f, elapsed / transitionDuration);
-
+            
             color.postExposure.value = Mathf.Lerp(startExposure, targetExposure, t);
             color.saturation.value = Mathf.Lerp(startSaturation, targetSaturation, t);
             color.contrast.value = Mathf.Lerp(startContrast, targetContrast, t);
-
+            
             if (dof != null)
                 dof.gaussianMaxRadius.value = Mathf.Lerp(startBlur, targetBlur, t);
 
@@ -127,11 +122,11 @@ public class SceneEffectsController : MonoBehaviour
             yield return null;
         }
 
-        // Ensure exact final values
+        // Snap to exact final values to avoid floating point drift
         color.postExposure.value = targetExposure;
         color.saturation.value = targetSaturation;
         color.contrast.value = targetContrast;
-
+        
         if (dof != null)
         {
             dof.gaussianMaxRadius.value = targetBlur;

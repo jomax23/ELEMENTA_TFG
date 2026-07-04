@@ -1,10 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Manages the active window and collision detection for melee punches.
-/// Uses a HashSet to ensure each target is only hit once per punch activation.
-/// </summary>
+// Manages the active window and collision detection for melee punches.
+// Uses a HashSet to ensure each target is only hit once per punch activation,
+// preventing multi-hits if the enemy stays inside the trigger zone.
 public class PunchHitbox : MonoBehaviour
 {
     [Header("Combat")]
@@ -13,10 +12,8 @@ public class PunchHitbox : MonoBehaviour
     private bool isActive;
     private readonly HashSet<IAbilityTarget> hitTargets = new();
 
-    /// <summary>
-    /// Enables or disables the hitbox logic. 
-    /// Clears the hit registry when activated to allow fresh hits.
-    /// </summary>
+    // Called by animation events to turn the hitbox on/off.
+    // Clears the registry when activated so the next punch can hit the same enemies again.
     public void SetActive(bool value)
     {
         isActive = value;
@@ -26,14 +23,15 @@ public class PunchHitbox : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!isActive) return;
-
-        // Prevent self-damage
+        
+        // Prevent self-damage if the hitbox clips the player's own model
         if (other.transform.root == transform.root) return;
 
         IAbilityTarget target = other.GetComponentInParent<IAbilityTarget>();
         if (target == null) return;
 
-        // Prevent multiple hits on the same target during a single punch
+        // HashSet.Add() returns false if the item is already in the set.
+        // This elegantly prevents hitting the same target multiple times in one swing.
         if (!hitTargets.Add(target)) return;
 
         target.ApplyDamage(damage, DamageType.Punch);

@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Standard water projectile that applies impact damage and physical knockback.
-/// Supports direction reversal (e.g., via Tornado).
-/// </summary>
+// Standard single-target water projectile. 
+// Destroys on impact and can be reflected back by the Tornado.
 public class WaterBallProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
@@ -14,28 +12,22 @@ public class WaterBallProjectile : ProjectileBase, IReversible
     private float actualDamage;
     private float actualPushForce;
 
-    /// <summary>
-    /// Initializes the projectile with direction, target layers, and affinity efficiency.
-    /// </summary>
     public void Initialize(int dirX, LayerMask layers, float scaledDamage, float scaledPushForce)
     {
         directionX = dirX;
         targetLayers = layers;
         actualDamage = scaledDamage;
         actualPushForce = scaledPushForce;
+        
         Destroy(gameObject, lifetime);
     }
 
     private void Update()
     {
-        // TryMove handles obstacle detection via Raycast
         TryMove(Vector3.right * directionX, speed);
     }
 
-    /// <summary>
-    /// Called by ProjectileBase when hitting a valid target.
-    /// Applies damage, knockback, and destroys the projectile.
-    /// </summary>
+    // Standard impact logic: apply damage/knockback and destroy the projectile.
     protected override void OnTargetHit(Collider target)
     {
         if (target.GetComponent<IAbilityTarget>() is IAbilityTarget abilityTarget)
@@ -46,10 +38,7 @@ public class WaterBallProjectile : ProjectileBase, IReversible
         Destroy(gameObject);
     }
 
-
-    /// <summary>
-    /// Reverses the horizontal movement direction.
-    /// </summary>
+    // Flips the movement direction so the Tornado can bounce it back at enemies.
     public void ReverseDirection()
     {
         directionX *= -1;

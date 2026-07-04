@@ -3,26 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Centralizes player abilities logic: active element, available skills, cooldowns, and HUD updates.
-/// </summary>
+// Central hub for the player's ability system. 
+// Handles element switching, cooldown tracking, affinity scaling, and HUD synchronization.
 public class PlayerAbilities : MonoBehaviour
 {
-    // ── Components ─────────────────────────────────────────────────────────
     private PlayerMovement playerMovement;
 
-    // ── Element ────────────────────────────────────────────────────────────
     [Header("Element")]
     [SerializeField] private ElementType currentElement;
     public ElementType CurrentElement => currentElement;
     private ElementType mainElement;
 
-    // ── HUD ────────────────────────────────────────────────────────────────
     [Header("HUD")]
     [SerializeField] private AbilitiesHUD abilitiesHUD;
     [SerializeField] private AffinityHUD affinityHUD;
 
-    // ── Input ──────────────────────────────────────────────────────────────
     [Header("Input")]
     [SerializeField] private InputActionReference ability1Action;
     [SerializeField] private InputActionReference ability2Action;
@@ -30,7 +25,6 @@ public class PlayerAbilities : MonoBehaviour
     [SerializeField] private InputActionReference ability4Action;
     [SerializeField] private InputActionReference changeElementScrollAction;
 
-    // ── Ability Sets ───────────────────────────────────────────────────────
     [Header("Element Ability Sets")]
     [SerializeField] private ElementAbilitySet[] elementAbilitySets;
     
@@ -39,30 +33,19 @@ public class PlayerAbilities : MonoBehaviour
     private AbilityData currentAbility3;
     private AbilityData currentAbility4;
 
-    // ── Cooldowns ──────────────────────────────────────────────────────────
     private Dictionary<AbilityData, float> cooldownTimers = new();
-    private AbilityData[] cooldownKeys; // Cached to prevent allocation per frame
+    // Cache dictionary keys into an array to prevent GC allocations when iterating in Update()
+    private AbilityData[] cooldownKeys; 
 
-    // ── Active Ability ─────────────────────────────────────────────────────
     private Coroutine activeAbilityCoroutine;
     private AbilityData activeAbility;
-
-    // ── Affinity ───────────────────────────────────────────────────────────
     private AffinityData affinityData;
 
-    // ── Element Scroll ─────────────────────────────────────────────────────
     [Header("Scroll")]
     [SerializeField] private float scrollCooldown = 0.15f;
     private float scrollTimer;
 
-    // =========================================================================
-    // INITIALIZATION
-    // =========================================================================
-
-    private void Awake()
-    {
-        playerMovement = GetComponent<PlayerMovement>();
-    }
+    private void Awake() => playerMovement = GetComponent<PlayerMovement>();
 
     private void Start()
     {
@@ -87,19 +70,17 @@ public class PlayerAbilities : MonoBehaviour
 
         LoadAbilitiesForCurrentElement();
         InitializeCooldowns();
-
+        
         abilitiesHUD.SetElement(currentElement);
         abilitiesHUD.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
         affinityHUD?.Refresh(currentElement);
-
+        
         playerMovement.OnStunApplied += HandleStunInterrupt;
     }
 
     private void OnDestroy()
     {
-        if (playerMovement != null)
-            playerMovement.OnStunApplied -= HandleStunInterrupt;
-
+        if (playerMovement != null) playerMovement.OnStunApplied -= HandleStunInterrupt;
         if (MatchController.Instance != null)
         {
             MatchController.Instance.OnMasterControlStart -= RefreshAbilitiesOnStateChange;
@@ -112,10 +93,6 @@ public class PlayerAbilities : MonoBehaviour
         LoadAbilitiesForCurrentElement();
         abilitiesHUD?.SetAbilities(currentAbility1, currentAbility2, currentAbility3, currentAbility4);
     }
-
-    // =========================================================================
-    // INPUT & UPDATE
-    // =========================================================================
 
     private void OnEnable()
     {
@@ -149,10 +126,6 @@ public class PlayerAbilities : MonoBehaviour
         if (ability4Action.action.WasPressedThisFrame()) TryUseAbility(currentAbility4);
     }
 
-    // =========================================================================
-    // STUN / INTERRUPTION
-    // =========================================================================
-
     private void HandleStunInterrupt() => ForceInterrupt();
 
     private void ForceInterrupt()
@@ -162,26 +135,17 @@ public class PlayerAbilities : MonoBehaviour
             StopCoroutine(activeAbilityCoroutine);
             activeAbilityCoroutine = null;
         }
-
         if (activeAbility != null)
         {
             activeAbility.Cancel(gameObject);
             activeAbility = null;
         }
-
         playerMovement.CancelAbilityAnimation();
     }
 
-    // =========================================================================
-    // ACTIVATION
-    // =========================================================================
-
     private void TryUseAbility(AbilityData ability)
     {
-        if (ability == null) return;
-
-        if (!playerMovement.IsGrounded) return;
-
+        if (ability == null || !playerMovement.IsGrounded) return;
         if (cooldownTimers.TryGetValue(ability, out float remaining) && remaining > 0f) return;
 
         float cooldownMult = GetCooldownMultiplierForAbility(ability);
@@ -204,12 +168,15 @@ public class PlayerAbilities : MonoBehaviour
 
     private IEnumerator AbilityLifecycle(AbilityData ability)
     {
+        // 1. Wait for the wind-up delay
         if (ability.activationDelay > 0f)
             yield return new WaitForSeconds(ability.activationDelay);
 
+        // 2. Fire the effect with affinity scaling
         float efficiency = GetEfficiencyForAbility(ability);
         ability.ActivateWithAudio(gameObject, efficiency);
 
+        // 3. Lock the player in the animation until it finishes
         float lockRemaining = ability.totalAnimationDuration - ability.activationDelay;
         if (lockRemaining > 0f)
             yield return new WaitForSeconds(lockRemaining);
@@ -219,10 +186,7 @@ public class PlayerAbilities : MonoBehaviour
         playerMovement.CancelAbilityAnimation();
     }
 
-    // =========================================================================
-    // AFFINITY
-    // =========================================================================
-
+    // If Master Control is active, bypass all elemental affinity penalties
     private float GetEfficiencyForAbility(AbilityData ability)
     {
         if (MatchController.Instance?.ShouldBypassAffinity() == true) return 1f;
@@ -235,14 +199,9 @@ public class PlayerAbilities : MonoBehaviour
         return affinityData?.GetCooldownMultiplier(mainElement, ability.element) ?? 1f;
     }
 
-    // =========================================================================
-    // COOLDOWNS (Zero-allocation iteration)
-    // =========================================================================
-
     private void InitializeCooldowns()
     {
         cooldownTimers.Clear();
-
         foreach (ElementAbilitySet set in elementAbilitySets)
         {
             TryRegisterCooldown(set.ability1);
@@ -250,7 +209,7 @@ public class PlayerAbilities : MonoBehaviour
             TryRegisterCooldown(set.ability3);
             TryRegisterCooldown(set.ability4);
         }
-
+        // Copy keys to array for zero-allocation iteration in Update()
         cooldownKeys = new AbilityData[cooldownTimers.Count];
         cooldownTimers.Keys.CopyTo(cooldownKeys, 0);
     }
@@ -261,30 +220,25 @@ public class PlayerAbilities : MonoBehaviour
             cooldownTimers.Add(ability, 0f);
     }
 
+    // Tick down cooldowns using the cached array for zero-allocation performance
     private void UpdateCooldowns()
     {
         if (cooldownKeys == null) return;
-
         for (int i = 0; i < cooldownKeys.Length; i++)
         {
             AbilityData ability = cooldownKeys[i];
             if (cooldownTimers[ability] <= 0f) continue;
-
+            
             cooldownTimers[ability] -= Time.deltaTime;
             if (cooldownTimers[ability] < 0f) cooldownTimers[ability] = 0f;
         }
-
         RefreshCooldownHUD();
     }
-
-    // =========================================================================
-    // ELEMENT CHANGE
-    // =========================================================================
 
     private void HandleElementChangeScroll()
     {
         if (playerMovement.IsUsingAbility) return;
-
+        
         scrollTimer -= Time.deltaTime;
         if (scrollTimer > 0f) return;
 
@@ -334,10 +288,6 @@ public class PlayerAbilities : MonoBehaviour
         return null;
     }
 
-    // =========================================================================
-    // HELPERS
-    // =========================================================================
-
     private int GetSlotIndex(AbilityData ability)
     {
         if (ability == currentAbility1) return 0;
@@ -362,7 +312,6 @@ public class PlayerAbilities : MonoBehaviour
             abilitiesHUD.UpdateSlotCooldown(index, 0f);
             return;
         }
-
         float remaining = cooldownTimers.TryGetValue(ability, out float time) ? time : 0f;
         abilitiesHUD.UpdateSlotCooldown(index, remaining);
     }

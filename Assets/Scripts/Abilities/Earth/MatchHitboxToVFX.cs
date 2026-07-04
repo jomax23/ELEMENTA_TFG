@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Synchronizes a physics hitbox's vertical position with a visual effect's animation curve.
-/// This ensures the collision area matches the visual height of the VFX over time without scaling the hitbox itself.
-/// </summary>
+// Syncs the hitbox's vertical position with the VFX animation curve.
+// We move the transform instead of scaling the collider to keep the collision area accurate.
 public class MatchHitboxToVFX : MonoBehaviour
 {
     [Header("References")]
@@ -23,7 +21,7 @@ public class MatchHitboxToVFX : MonoBehaviour
 
     private void Start()
     {
-        // Store the initial local position (ground level)
+        // Cache the starting local position so we only modify the Y axis
         startPos = hitboxObject.localPosition;
     }
 
@@ -31,13 +29,14 @@ public class MatchHitboxToVFX : MonoBehaviour
     {
         timer += Time.deltaTime;
         float t = Mathf.Clamp01(timer / duration);
-        
-        // Evaluate curve and apply max height multiplier
+
+        // Evaluate the curve and apply the max height multiplier
         float height = heightCurve.Evaluate(t) * maxHeight;
 
         // Move ONLY on the Y axis, preserving X and Z
         hitboxObject.localPosition = new Vector3(startPos.x, startPos.y + height, startPos.z);
 
+        // Clean up once the animation finishes
         if (t >= 1f)
         {
             Destroy(gameObject);

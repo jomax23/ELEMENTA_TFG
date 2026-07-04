@@ -2,10 +2,7 @@ using System;
 using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Handles the player's air dash mechanic, including the physical dash movement 
-/// and the visual "mounting" onto the air ball prefab.
-/// </summary>
+// Handles the physical dash movement and the visual "mounting" onto the air ball prefab.
 [RequireComponent(typeof(PlayerMovement))]
 [RequireComponent(typeof(CharacterController))]
 public class PlayerAirDash : MonoBehaviour
@@ -14,17 +11,17 @@ public class PlayerAirDash : MonoBehaviour
     [SerializeField] private GameObject airBallPrefab;
     [SerializeField] private float airBallY = 0.5f;
     [SerializeField] private float playerYOnBall = 1.5f;
+
     private float currentDashSpeed;
 
     [Header("Smooth Mount")]
-    [Tooltip("Time in seconds it takes for the character to mount the ball.")]
     [SerializeField] private float mountDuration = 0.15f;
 
     public event Action OnDashEnded;
 
     private CharacterController controller;
     private PlayerMovement movement;
-
+    
     private bool isDashing;
     private float timer;
     private int direction;
@@ -37,14 +34,13 @@ public class PlayerAirDash : MonoBehaviour
         movement = GetComponent<PlayerMovement>();
     }
 
-    /// <summary>
-    /// Initiates the dash sequence, spawns the air ball, and locks player movement.
-    /// </summary>
+    // Kicks off the dash, spawns the visual ball, and locks standard player input
     public void StartDash(float speed, float duration)
     {
         if (isDashing) return;
+        
         isDashing = true;
-        timer = duration; // Usamos el valor pasado, no el del Inspector
+        timer = duration; 
         direction = movement.FacingDirection;
         originalPlayerY = transform.position.y;
 
@@ -57,15 +53,11 @@ public class PlayerAirDash : MonoBehaviour
             airBall = Instantiate(airBallPrefab);
             SyncAirBallPosition();
         }
+
         StartCoroutine(SmoothMountY(playerYOnBall));
-        
-        // Guardamos la velocidad para usarla en Update
         currentDashSpeed = speed; 
     }
 
-    /// <summary>
-    /// Forcefully interrupts the dash and cleans up.
-    /// </summary>
     public void ForceEndDash()
     {
         if (!isDashing) return;
@@ -78,7 +70,6 @@ public class PlayerAirDash : MonoBehaviour
         if (!isDashing) return;
 
         timer -= Time.deltaTime;
-
         controller.Move(Vector3.right * direction * currentDashSpeed * Time.deltaTime);
         SyncAirBallPosition();
 
@@ -89,9 +80,9 @@ public class PlayerAirDash : MonoBehaviour
     private void EndDash()
     {
         isDashing = false;
-
+        
         movement.SetHorizontalMovementEnabled(true);
-        movement.SetGravityEnabled(true); // Restores gravity at the end
+        movement.SetGravityEnabled(true); 
         movement.SetDashing(false);
 
         StartCoroutine(SmoothMountY(originalPlayerY));
@@ -101,34 +92,32 @@ public class PlayerAirDash : MonoBehaviour
             Destroy(airBall);
             airBall = null;
         }
-
+        
         OnDashEnded?.Invoke();
     }
 
-    /// <summary>
-    /// Smoothly transitions the player's Y position. 
-    /// Temporarily disables the CharacterController because it ignores direct transform.position changes.
-    /// </summary>
+    // CharacterController ignores direct transform.position changes, so we temporarily 
+    // disable it to smoothly interpolate the player's Y position up and down.
     private IEnumerator SmoothMountY(float targetY)
     {
         float startY = transform.position.y;
         float elapsed = 0f;
-
+        
         while (elapsed < mountDuration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.SmoothStep(0f, 1f, elapsed / mountDuration);
-
+            
             controller.enabled = false;
             Vector3 pos = transform.position;
             pos.y = Mathf.Lerp(startY, targetY, t);
             transform.position = pos;
             controller.enabled = true;
-
+            
             yield return null;
         }
 
-        // Ensure exact final position
+        // Snap to exact final position
         controller.enabled = false;
         Vector3 finalPos = transform.position;
         finalPos.y = targetY;
@@ -139,6 +128,7 @@ public class PlayerAirDash : MonoBehaviour
     private void SyncAirBallPosition()
     {
         if (airBall == null) return;
+        
         Vector3 pos = transform.position;
         pos.y = airBallY;
         airBall.transform.position = pos;

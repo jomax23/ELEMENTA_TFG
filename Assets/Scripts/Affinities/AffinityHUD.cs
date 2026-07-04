@@ -2,15 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Optional HUD component that displays the current element's affinity status to the player.
-/// Placed next to the AbilitiesHUD to provide immediate visual feedback when switching to a penalized element.
-/// 
-/// UNITY SETUP:
-/// 1. Add this component to a GameObject in the gameplay HUD Canvas.
-/// 2. Assign the fields in the Inspector.
-/// 3. Call Refresh(currentElement) from PlayerAbilities whenever the element changes.
-/// </summary>
+// In-game HUD showing affinity penalties for the currently selected element.
+// Hides itself entirely if the player is using their main element (no penalties).
 public class AffinityHUD : MonoBehaviour
 {
     [Header("References")]
@@ -22,9 +15,9 @@ public class AffinityHUD : MonoBehaviour
     [SerializeField] private TextMeshProUGUI cooldownLabel;
 
     [Header("Colors")]
-    [SerializeField] private Color fullEfficiencyColor = new Color(0.3f, 1f, 0.3f);
-    [SerializeField] private Color partialColor = new Color(1f, 0.8f, 0.1f);
-    [SerializeField] private Color lockedColor = new Color(1f, 0.25f, 0.25f);
+    [SerializeField] private Color fullEfficiencyColor = new Color(0.3f, 1f, 0.3f); // Green
+    [SerializeField] private Color partialColor = new Color(1f, 0.8f, 0.1f);        // Yellow
+    [SerializeField] private Color lockedColor = new Color(1f, 0.25f, 0.25f);       // Red
 
     private void Awake()
     {
@@ -32,10 +25,7 @@ public class AffinityHUD : MonoBehaviour
             affinityPenaltyPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Refreshes the affinity HUD when the active element changes.
-    /// Called from PlayerAbilities.ChangeElement / LoadAbilitiesForCurrentElement.
-    /// </summary>
+    // Called by PlayerAbilities whenever the active element changes
     public void Refresh(ElementType currentElement)
     {
         if (GameSession.Instance?.AffinityData == null)
@@ -47,31 +37,32 @@ public class AffinityHUD : MonoBehaviour
         ElementType mainElement = GameSession.Instance.MainElement;
         AffinityInfo info = GameSession.Instance.AffinityData.GetAffinityInfo(mainElement, currentElement);
 
-        // If it's the main element, do not show penalty
+        // If it's the main element, there are no penalties, so hide the HUD
         if (info.efficiency >= 1f)
         {
             Hide();
             return;
         }
 
-        // If completely locked or penalized: show panel
+        // Show the panel and color the text based on severity
         if (affinityPenaltyPanel != null)
             affinityPenaltyPanel.SetActive(true);
 
-        Color textColor = info.availableAbilities == 0 ? lockedColor : partialColor;
+        bool isLocked = info.availableAbilities == 0;
+        Color textColor = isLocked ? lockedColor : partialColor;
 
         if (efficiencyLabel != null)
         {
-            efficiencyLabel.text = info.availableAbilities == 0 ? "LOCKED" : $"Efficiency: {info.efficiency * 100f:0}%";
+            efficiencyLabel.text = isLocked ? "LOCKED" : $"Efficiency: {info.efficiency * 100f:0}%";
             efficiencyLabel.color = textColor;
         }
-
+        
         if (abilitiesLabel != null)
         {
             abilitiesLabel.text = $"Abilities: {info.availableAbilities}/4";
             abilitiesLabel.color = textColor;
         }
-
+        
         if (cooldownLabel != null)
         {
             cooldownLabel.text = info.cooldownMultiplier > 1f ? $"Cooldown: +{(info.cooldownMultiplier - 1f) * 100f:0}%" : "Cooldown: —";

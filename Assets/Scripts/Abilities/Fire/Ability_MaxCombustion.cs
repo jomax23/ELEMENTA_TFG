@@ -1,11 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Advanced fire ability that fires a continuous combustion beam, 
-/// followed by a fireball projectile after the beam concludes.
-/// Supports interruption via the Cancel method.
-/// </summary>
+// Two-phase ultimate: fires a continuous beam, then launches a heavy fireball.
+// Supports interruption; if cancelled during the beam phase, the fireball won't fire.
 [CreateAssetMenu(fileName = "CombustionMaxima", menuName = "Abilities/Fire/Combustión Máxima")]
 public class Ability_MaxCombustion : AbilityData
 {
@@ -15,11 +12,10 @@ public class Ability_MaxCombustion : AbilityData
     [SerializeField] private float maxDistance = 12f;
 
     [Header("Fireball Stats")]
-    [Tooltip("Stats for the follow-up fireball, controlled entirely by this SO.")]
     [SerializeField] private float fireballImpactDamage = 15f;
     [SerializeField] private float fireballBurnDps = 3f;
     [SerializeField] private float fireballBurnDuration = 3f;
-    
+
     [Header("Fireball")]
     [SerializeField] private FireballProjectile fireballPrefab;
 
@@ -35,11 +31,9 @@ public class Ability_MaxCombustion : AbilityData
         float scaledImpact = fireballImpactDamage * efficiency;
         float scaledBurnDps = fireballBurnDps * efficiency;
         float scaledBurnDur = fireballBurnDuration * efficiency;
-        
         return string.Format(descriptionTemplate, scaledBeamDur, scaledImpact, scaledBurnDps, scaledBurnDur);
-
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
@@ -58,10 +52,10 @@ public class Ability_MaxCombustion : AbilityData
 
         isCancelled = false;
         activeBeam = null;
-
         user.RunCoroutine(Execute(user, spawnPoint, efficiency));
     }
 
+    // Cleans up the beam if the player gets interrupted (e.g., stunned)
     public override void Cancel(GameObject owner)
     {
         isCancelled = true;
@@ -77,18 +71,18 @@ public class Ability_MaxCombustion : AbilityData
         int dirX = user.FacingDirection;
         Vector3 dir = Vector3.right * dirX;
 
-        // 1. Spawn and initialize the visual beam (duration scales with efficiency)
+        // 1. Spawn and initialize the visual beam
         activeBeam = Instantiate(airBeamPrefab, spawnPoint.position, Quaternion.identity);
         CombustionBeam beam = activeBeam.GetComponent<CombustionBeam>();
         beam.Initialize(spawnPoint, dir, maxDistance, obstacleLayers, airBeamDuration * efficiency);
 
-        // 2. Wait for the beam to finish
+        // 2. Wait for the beam phase to finish
         yield return new WaitForSeconds(airBeamDuration * efficiency);
 
-        // 3. Abort if interrupted during the beam phase
+        // 3. Abort if the player was interrupted during the beam
         if (isCancelled) yield break;
 
-        // 4. Clean up beam reference (the beam component handles its own destruction)
+        // 4. Clean up beam reference (the beam component handles its own visual destruction)
         if (activeBeam != null)
         {
             Object.Destroy(activeBeam);
@@ -100,15 +94,12 @@ public class Ability_MaxCombustion : AbilityData
         float scaledBurnDps = fireballBurnDps * efficiency;
         float scaledBurnDur = fireballBurnDuration * efficiency;
 
-        // 6. Spawn the follow-up fireball with the scaled values
+        // 6. Spawn the follow-up fireball
         FireballProjectile fireball = Instantiate(
             fireballPrefab,
             spawnPoint.position,
             Quaternion.Euler(0f, 0f, 90f * dirX)
         );
-        
-        // Note: This requires the updated FireballProjectile.cs from the previous step 
-        // that accepts (dirX, layers, scaledDamage, scaledBurnDps, scaledBurnDur)
         fireball.Initialize(dirX, user.TargetLayers, scaledImpact, scaledBurnDps, scaledBurnDur);
     }
 }

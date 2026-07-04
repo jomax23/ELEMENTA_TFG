@@ -2,10 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Auxiliary component representing a single row in the affinity preview table.
-/// Displays: element name, number of available abilities, efficiency, and cooldown penalty.
-/// </summary>
+// Single row in the affinity preview table. 
+// Handles text formatting and color-coding based on the element's affinity state.
 public class AffinityRowUI : MonoBehaviour
 {
     [SerializeField] private Image elementIcon;
@@ -15,36 +13,31 @@ public class AffinityRowUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI cooldownText;
 
     [Header("Colors")]
-    [SerializeField] private Color mainElementColor = new Color(1f, 0.85f, 0f);
+    [SerializeField] private Color mainElementColor = new Color(1f, 0.85f, 0f); // Gold
     [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color lockedColor = new Color(1f, 1f, 1f, 0.3f);
+    [SerializeField] private Color lockedColor = new Color(1f, 1f, 1f, 0.3f);  // Dimmed
 
-    /// <summary>
-    /// Populates the row with data for a specific element and its affinity info.
-    /// </summary>
     public void SetData(ElementType element, AffinityInfo info)
     {
-        if (elementName != null)
-            elementName.text = element.ToString().ToUpper();
-
-        if (abilitiesText != null)
-            abilitiesText.text = info.availableAbilities > 0 ? $"{info.availableAbilities}/4" : "0/4";
-
-        if (efficiencyText != null)
-            efficiencyText.text = info.efficiency >= 1f ? "100%" : $"{(info.efficiency * 100f):0}%";
-
-        if (cooldownText != null)
+        // Format text
+        if (elementName != null) elementName.text = element.ToString().ToUpper();
+        if (abilitiesText != null) abilitiesText.text = info.availableAbilities > 0 ? $"{info.availableAbilities}/4" : "0/4";
+        if (efficiencyText != null) efficiencyText.text = info.efficiency >= 1f ? "100%" : $"{(info.efficiency * 100f):0}%";
+        
+        // Only show cooldown penalty if it's actually higher than normal (1.0x)
+        if (cooldownText != null) 
             cooldownText.text = info.cooldownMultiplier <= 1f ? "—" : $"+{((info.cooldownMultiplier - 1f) * 100f):0}%";
 
         // Determine row color based on affinity state
         Color rowColor;
         if (info.efficiency >= 1f)
-            rowColor = mainElementColor;
+            rowColor = mainElementColor;      // Highlight the player's main element
         else if (info.availableAbilities == 0)
-            rowColor = lockedColor;
+            rowColor = lockedColor;           // Dim completely locked elements
         else
-            rowColor = normalColor;
+            rowColor = normalColor;           // Standard white for penalized but usable elements
 
+        // Apply color to all text and icons in the row
         if (elementName != null) elementName.color = rowColor;
         if (elementIcon != null) elementIcon.color = rowColor;
         if (abilitiesText != null) abilitiesText.color = rowColor;

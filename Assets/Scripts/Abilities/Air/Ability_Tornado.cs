@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Spawns a TornadoArea prefab in front of the user.
-/// The tornado acts as a persistent hazard that can reverse enemy projectiles.
-/// </summary>
+// Spawns a persistent tornado hazard that can reflect enemy projectiles.
+// Spawns slightly in front of the user based on their facing direction.
 [CreateAssetMenu(fileName = "Tornado", menuName = "Abilities/Air/Tornado")]
 public class Ability_Tornado : AbilityData
 {
@@ -17,11 +15,9 @@ public class Ability_Tornado : AbilityData
 
     public override string GetFormattedDescription(float efficiency)
     {
-        float scaledLifetime = lifetime * efficiency;
-        return string.Format(descriptionTemplate, scaledLifetime);
-
+        return string.Format(descriptionTemplate, lifetime * efficiency);
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         if (tornadoPrefab == null)
@@ -37,14 +33,13 @@ public class Ability_Tornado : AbilityData
             return;
         }
 
+        // Calculate spawn position in front of the player
         int dirX = user.FacingDirection;
         Vector3 spawnPos = owner.transform.position 
                            + Vector3.right * dirX * spawnOffsetX 
                            + Vector3.up * spawnOffsetY;
 
-        float scaledLifetime = lifetime * efficiency;
-
         TornadoArea tornado = Instantiate(tornadoPrefab, spawnPos, Quaternion.Euler(-90f, 0f, 0f));
-        tornado.Initialize(scaledLifetime);
+        tornado.Initialize(lifetime * efficiency);
     }
 }

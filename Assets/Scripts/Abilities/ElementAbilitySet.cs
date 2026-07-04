@@ -1,8 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// ScriptableObject that maps a specific ElementType to its 4 corresponding abilities.
-/// </summary>
+// Maps a specific element to its 4 corresponding abilities.
 [CreateAssetMenu(fileName = "ElementAbilitySet", menuName = "Abilities/Element Ability Set")]
 public class ElementAbilitySet : ScriptableObject
 {

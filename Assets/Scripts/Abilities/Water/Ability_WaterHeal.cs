@@ -1,10 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Water ability that heals the user over time while displaying VFX.
-/// The total healing amount is scaled by elemental affinity efficiency.
-/// </summary>
+// Heals the user over time while spawning protective VFX.
+// Overrides Cancel to immediately stop the healing loop and clean up effects if interrupted.
 [CreateAssetMenu(fileName = "SanacionMarina", menuName = "Abilities/Water/Sanación Marina")]
 public class Ability_WaterHeal : AbilityData
 {
@@ -29,23 +27,22 @@ public class Ability_WaterHeal : AbilityData
         float scaledHeal = totalHeal * efficiency;
         float scaledDuration = duration * efficiency;
         float healPerSecond = scaledHeal / scaledDuration;
-
         return string.Format(descriptionTemplate, scaledHeal, scaledDuration, healPerSecond);
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
         if (user == null)
         {
-            Debug.LogError($"[{nameof(Ability_WaterHeal)}] IAbilityUser component not found on {owner.name}.", owner);
+            Debug.LogError($"[{nameof(Ability_WaterHeal)}] IAbilityUser not found on {owner.name}.", owner);
             return;
         }
 
         Health health = owner.GetComponent<Health>();
         if (health == null)
         {
-            Debug.LogError($"[{nameof(Ability_WaterHeal)}] Health component not found on {owner.name}.", owner);
+            Debug.LogError($"[{nameof(Ability_WaterHeal)}] Health not found on {owner.name}.", owner);
             return;
         }
 
@@ -55,10 +52,11 @@ public class Ability_WaterHeal : AbilityData
 
         float scaledHeal = totalHeal * efficiency;
         float scaledDuration = duration * efficiency;
-        
+
         user.RunCoroutine(HealWithVFX(owner.transform, health, scaledHeal, scaledDuration));
     }
 
+    // Immediately stop healing and clean up VFX if the player gets interrupted
     public override void Cancel(GameObject owner)
     {
         isCancelled = true;
@@ -72,7 +70,7 @@ public class Ability_WaterHeal : AbilityData
             activeHealVfx = Instantiate(healVfxPrefab, owner);
             activeHealVfx.transform.localPosition = healVfxOffset;
         }
-
+        
         if (domeVfxPrefab != null)
         {
             activeDomeVfx = Instantiate(domeVfxPrefab, owner);
@@ -89,10 +87,10 @@ public class Ability_WaterHeal : AbilityData
             float amount = healPerSecond * Time.deltaTime;
             health.Heal(amount);
             healed += amount;
-
+            
             yield return null;
         }
-
+        
         DestroyVFX();
     }
 
@@ -103,7 +101,7 @@ public class Ability_WaterHeal : AbilityData
             Object.Destroy(activeHealVfx);
             activeHealVfx = null;
         }
-
+        
         if (activeDomeVfx != null)
         {
             Object.Destroy(activeDomeVfx);

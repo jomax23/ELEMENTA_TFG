@@ -2,11 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-/// <summary>
-/// Area effect that spawns with an animation, waits for an activation delay, 
-/// and then continuously damages targets within its trigger volume.
-/// Stats are initialized and scaled by the elemental affinity efficiency multiplier.
-/// </summary>
+// Lingering fire trap that pops up from the ground and deals delayed continuous damage.
+// Stats are injected and scaled by the elemental affinity efficiency multiplier.
 public class TrampaVolcanicaArea : MonoBehaviour
 {
     [Header("Spawn Animation")]
@@ -17,28 +14,23 @@ public class TrampaVolcanicaArea : MonoBehaviour
 
     private LayerMask targetLayers;
     private bool initialized;
-    
-    // Runtime values (injected by AbilityData)
+
+    // Runtime values injected by the AbilityData
     private float actualDamagePerSecond;
     private float actualLifetime;
 
-
+    // Tracks how long each enemy has been standing in the trap.
+    // They only start taking damage after the 'activationTime' delay.
     private class TargetData
     {
         public float timeInside;
         public bool isActive;
     }
- 
-    private readonly Dictionary<IAbilityTarget, TargetData> targets = new();
 
+    private readonly Dictionary<IAbilityTarget, TargetData> targets = new();
     private bool trapActive;
     private Vector3 startPosition;
 
-    /// <summary>
-    /// Initializes the trap with target layers and scales effects based on affinity efficiency.
-    /// </summary>
-    /// <param name="layers">The layer mask of valid targets.</param>
-    /// <param name="efficiency">Affinity multiplier (0–1). Scales damage per second.</param>
     public void Initialize(LayerMask layers, float scaledDamagePerSecond, float scaledLifetime)
     {
         targetLayers = layers;
@@ -51,13 +43,14 @@ public class TrampaVolcanicaArea : MonoBehaviour
     {
         startPosition = transform.position;
 
-        // Start hidden and below ground
+        // Start hidden and below ground before the pop-up animation
         transform.localScale = Vector3.zero;
         transform.position += Vector3.up * spawnDepth;
 
         StartCoroutine(AppearRoutine());
     }
 
+    // Pops the trap up from below the ground with a scaling animation
     private IEnumerator AppearRoutine()
     {
         float time = 0f;
@@ -74,11 +67,11 @@ public class TrampaVolcanicaArea : MonoBehaviour
             yield return null;
         }
 
+        // Snap to final values to avoid floating point drift
         transform.localScale = endScale;
         transform.position = targetPosition;
+
         trapActive = true;
-        
-        // Use the scaled lifetime passed from the SO
         Destroy(gameObject, actualLifetime);
     }
 
@@ -88,6 +81,7 @@ public class TrampaVolcanicaArea : MonoBehaviour
         UpdateTargets();
     }
 
+    // Applies damage to targets that have been inside the trap long enough
     private void UpdateTargets()
     {
         float delta = Time.deltaTime;
@@ -106,10 +100,9 @@ public class TrampaVolcanicaArea : MonoBehaviour
             }
             else
             {
+                // Multiply DPS by deltaTime to apply damage per frame
                 pair.Key.ApplyDamage(actualDamagePerSecond * delta);
             }
-            // Note: Dictionary iteration during modification is safe here 
-            // because we only modify the values inside the existing entries.
         }
     }
 

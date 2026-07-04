@@ -1,10 +1,9 @@
 using UnityEngine;
 
-/// <summary>
-/// Abstract base class for all projectiles.
-/// Uses Raycast for obstacle collision (to avoid physics trigger issues with static colliders)
-/// and OnTriggerEnter for target detection (since targets use CharacterControllers).
-/// </summary>
+// Abstract base class for all projectiles.
+// Uses a hybrid collision approach: 
+// 1. Raycasts for physical obstacles (walls/ground) to prevent fast projectiles from tunneling.
+// 2. Trigger colliders for targets (since targets use CharacterControllers).
 [RequireComponent(typeof(Collider))]
 public abstract class ProjectileBase : MonoBehaviour
 {
@@ -12,51 +11,47 @@ public abstract class ProjectileBase : MonoBehaviour
     [Tooltip("Layers that block the projectile (walls, ground, etc.).")]
     [SerializeField] private LayerMask obstacleLayers;
 
-    /// <summary>Target layers to be assigned by the subclass during initialization.</summary>
+    // Target layers are assigned by the subclass during initialization
     protected LayerMask targetLayers;
-
-    /// <summary>Read-only access to obstacle layers for subclass custom raycasts.</summary>
+    
+    // Read-only access to obstacle layers for subclass custom raycasts
     protected LayerMask ObstacleLayers => obstacleLayers;
 
-    /// <summary>
-    /// Moves the projectile and checks for obstacles via Raycast before applying the movement.
-    /// </summary>
-    /// <returns>True if movement was successful, false if an obstacle was hit.</returns>
+    // Moves the projectile and checks for obstacles via Raycast before applying the movement.
     protected bool TryMove(Vector3 direction, float speed)
     {
         float step = speed * Time.deltaTime;
-        // Look-ahead margin prevents fast projectiles from tunneling into geometry
+        
+        // Look-ahead margin prevents fast projectiles from phasing through thin geometry
         float lookAhead = step + 0.15f;
-
+        
         if (Physics.Raycast(transform.position, direction, lookAhead, obstacleLayers))
         {
             OnObstacleHit();
             return false;
         }
-
+        
         transform.position += direction * step;
         return true;
     }
 
-    /// <summary>
-    /// Detects targets overlapping with the projectile's trigger collider.
-    /// </summary>
+    // Detects targets overlapping with the projectile's trigger collider.
     protected virtual void OnTriggerEnter(Collider other)
     {
         if (IsInMask(other.gameObject.layer, targetLayers))
             OnTargetHit(other);
     }
 
-    /// <summary>Called when the raycast detects an obstacle. Override to add VFX/SFX.</summary>
+    // Override to add impact VFX/SFX when hitting a wall
     protected virtual void OnObstacleHit()
     {
         Destroy(gameObject);
     }
 
-    /// <summary>Called when the trigger overlaps with a valid target layer.</summary>
+    // Subclasses define what happens when a valid target is hit
     protected abstract void OnTargetHit(Collider target);
 
-    /// <summary>Helper to check if a layer is included in a LayerMask.</summary>
+    // Helper to check if a layer is included in a LayerMask
     protected static bool IsInMask(int layer, LayerMask mask) =>
         (mask.value & (1 << layer)) != 0;
 }

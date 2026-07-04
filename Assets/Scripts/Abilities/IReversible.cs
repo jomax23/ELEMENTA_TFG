@@ -1,6 +1,4 @@
-/// <summary>
-/// Interface for projectiles or effects that can have their direction reversed.
-/// </summary>
+// Implemented by projectiles or effects that can be bounced or reflected back.
 public interface IReversible
 {
     void ReverseDirection();

@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Serializable data class representing an ability configuration for the Enemy AI.
-/// Defines distance thresholds, priority, and runtime cooldown tracking.
-/// </summary>
+// Data container for the AI's ability configuration. 
+// Tracks distance thresholds, priority, and runtime cooldowns.
 [System.Serializable]
 public class AIAbilityEntry
 {
@@ -20,7 +18,7 @@ public class AIAbilityEntry
     [Range(0.1f, 3f)]
     public float priority = 1f;
 
-    // Runtime cooldown tracking (not serialized - reset every play)
+    // Runtime cooldown tracking (reset every play, not serialized)
     [HideInInspector]
     public float cooldownTimer = 0f;
 }

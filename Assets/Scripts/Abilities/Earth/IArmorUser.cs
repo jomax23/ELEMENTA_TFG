@@ -1,13 +1,8 @@
-/// <summary>
-/// Interface for entities that can have their movement speed modified by an armor system.
-/// This decouples the PlayerArmor script from PlayerMovement, allowing it to be reused 
-/// on enemies or other entities that implement this interface.
-/// </summary>
+// Decouples the armor system from specific movement scripts.
+// Any entity (player or enemy) can implement this to receive speed penalties from the armor.
 public interface IArmorUser
 {
-    /// <summary>
-    /// Applies a movement speed multiplier. 
-    /// 1.0f = normal speed, < 1.0f = slowed down.
-    /// </summary>
+    // Applies a movement speed multiplier. 
+    // 1.0f = normal speed, < 1.0f = slowed down.
     void SetArmorSpeedMultiplier(float multiplier);
 }

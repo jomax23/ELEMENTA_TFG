@@ -2,32 +2,30 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 
-/// <summary>
-/// UI component for an ability selection button in the Abilities Info screen.
-/// Displays the ability icon and triggers a registered callback when clicked.
-/// </summary>
+// Represents a single ability slot in the UI. 
+// Holds the data reference, updates the icon, and fires a callback when clicked.
 public class AbilityButtonUIAbilities : MonoBehaviour
 {
     [SerializeField] private Image icon;
     
     public AbilityData Ability { get; private set; }
+    
     private Action _onClick;
     private Button _button;
 
     private void Awake()
     {
-        // Cache the Button component to avoid runtime allocation
+        // Cache the Button component once to avoid runtime GetComponent allocations
         _button = GetComponent<Button>();
     }
 
-    /// <summary>
-    /// Initializes the button with ability data and a click callback.
-    /// </summary>
+    // Called by the main UI controller to wire up the data and click event
     public void Init(AbilityData ability, Action onClick)
     {
         Ability = ability;
         _onClick = onClick;
 
+        // Set the icon if data exists, otherwise hide the image
         if (ability != null && ability.icon != null && icon != null)
         {
             icon.sprite = ability.icon;
@@ -40,7 +38,8 @@ public class AbilityButtonUIAbilities : MonoBehaviour
 
         if (_button != null)
         {
-            _button.onClick.RemoveAllListeners(); // Prevent duplicate listeners if Init is called multiple times
+            // Crucial: clear old listeners to prevent duplicate triggers if this button is recycled
+            _button.onClick.RemoveAllListeners(); 
             _button.onClick.AddListener(TriggerClick);
         }
     }

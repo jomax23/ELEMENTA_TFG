@@ -1,24 +1,21 @@
 using UnityEngine;
 
-/// <summary>
-/// Standard fireball projectile that moves forward, detects obstacles via Raycast,
-/// and applies impact damage plus a burn effect on hit.
-/// </summary>
+// Standard fireball. Moves forward, handles impact/burn damage, and can be reflected by the Tornado.
+// Inherits basic movement and collision logic from ProjectileBase.
 public class FireballProjectile : ProjectileBase, IReversible
 {
     [Header("Movement")]
     [SerializeField] private float speed = 14f;
     [SerializeField] private float lifetime = 2f;
-    
+
     private int directionX;
     private float lifeTimer;
+
+    // Scaled stats injected by the AbilityData
     private float actualImpactDamage;
     private float actualBurnDps;
     private float actualBurnDuration;
 
-    /// <summary>
-    /// Initializes the fireball with direction, target layers, and affinity efficiency.
-    /// </summary>
     public void Initialize(int dirX, LayerMask layers, float scaledDamage, float scaledBurnDps, float scaledBurnDur)
     {
         directionX = dirX;
@@ -32,8 +29,7 @@ public class FireballProjectile : ProjectileBase, IReversible
 
     private void Update()
     {
-        // TryMove performs a Raycast before moving. If an obstacle is hit, 
-        // it destroys the projectile and returns false, halting further Update execution.
+        // TryMove (from base class) raycasts ahead. If it hits a wall, it destroys the projectile and returns false.
         if (!TryMove(Vector3.right * directionX, speed)) return;
 
         lifeTimer += Time.deltaTime;
@@ -43,24 +39,18 @@ public class FireballProjectile : ProjectileBase, IReversible
         }
     }
 
-    /// <summary>
-    /// Called by ProjectileBase when the trigger overlaps with a valid target.
-    /// </summary>
+    // Triggered by the base class when the hitbox overlaps a valid target
     protected override void OnTargetHit(Collider target)
     {
-        IAbilityTarget abilityTarget = target.GetComponent<IAbilityTarget>();
-        if (abilityTarget != null)
+        if (target.GetComponent<IAbilityTarget>() is IAbilityTarget abilityTarget)
         {
             abilityTarget.ApplyDamage(actualImpactDamage);
             abilityTarget.ApplyBurn(actualBurnDps, actualBurnDuration);
         }
-        
         Destroy(gameObject);
     }
 
-    /// <summary>
-    /// Reverses the horizontal movement direction (used by abilities like Tornado).
-    /// </summary>
+    // Required by IReversible. Flips the direction so the Tornado can bounce it back.
     public void ReverseDirection()
     {
         directionX *= -1;

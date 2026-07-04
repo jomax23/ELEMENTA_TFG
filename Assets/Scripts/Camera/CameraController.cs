@@ -1,19 +1,15 @@
 using UnityEngine;
 
-/// <summary>
-/// Dynamically adjusts the camera position to keep all players in view.
-/// Calculates the bounding box of all objects tagged "Player" and centers the camera,
-/// adjusting the Z-axis distance based on the horizontal spread between players.
-/// </summary>
+// Dynamically frames all players in the scene.
+// Calculates a bounding box around all "Player" tagged objects and pulls the camera back
+// on the Z-axis based on how far apart they are horizontally.
 public class CameraController : MonoBehaviour
 {
     [Header("Camera Settings")]
     [Tooltip("Vertical offset applied to the camera's Y position.")]
     [SerializeField] private float yOffset = 2.0f;
-
     [Tooltip("Minimum distance (Z-axis) the camera can be from the players.")]
     [SerializeField] private float minDistance = 7.5f;
-
     [Tooltip("Maximum distance (Z-axis) the camera can be from the players.")]
     [SerializeField] private float maxDistance = 17.5f;
 
@@ -55,10 +51,9 @@ public class CameraController : MonoBehaviour
 
         float xMiddle = (xMin + xMax) * 0.5f;
         float yMiddle = (yMin + yMax) * 0.5f;
-        
+
         // Calculate required distance based on horizontal spread, clamped to min/max
         float distance = Mathf.Clamp(xMax - xMin, minDistance, maxDistance);
-
         transform.position = new Vector3(xMiddle, yMiddle + yOffset, -distance);
     }
 }

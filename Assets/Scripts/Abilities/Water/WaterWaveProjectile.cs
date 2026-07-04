@@ -1,10 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Continuous water wave that applies damage, slow, and knockback to targets it passes through.
-/// Unlike standard projectiles, it does NOT destroy upon hitting a target.
-/// It only stops when hitting a physical obstacle (handled by ProjectileBase).
-/// </summary>
+// Continuous water wave that pushes, slows, and damages enemies.
+// Unlike standard projectiles, it passes through targets and only stops at physical walls.
 public class WaterWaveProjectile : ProjectileBase
 {
     [Header("Movement")]
@@ -14,9 +11,6 @@ public class WaterWaveProjectile : ProjectileBase
     private int directionX;
     private float actualDamage, actualPushForce, actualSlowDuration, actualSlowMultiplier;
 
-    /// <summary>
-    /// Initializes the wave with direction, target layers, and affinity efficiency.
-    /// </summary>
     public void Initialize(int dirX, LayerMask layers, float scaledDamage, float scaledPush, float scaledSlowMult, float scaledSlowDur)
     {
         directionX = dirX;
@@ -25,19 +19,18 @@ public class WaterWaveProjectile : ProjectileBase
         actualPushForce = scaledPush;
         actualSlowMultiplier = scaledSlowMult;
         actualSlowDuration = scaledSlowDur;
+        
         Destroy(gameObject, lifetime);
     }
 
     private void Update()
     {
-        // TryMove handles obstacle detection via Raycast
+        // TryMove handles obstacle detection via Raycast. 
+        // It will destroy the wave if it hits a wall, but ignores enemies.
         TryMove(Vector3.right * directionX, speed);
     }
 
-    /// <summary>
-    /// Called by ProjectileBase when overlapping a valid target.
-    /// Applies effects but DOES NOT destroy the wave, allowing it to pass through multiple targets.
-    /// </summary>
+    // Apply effects but DO NOT destroy the wave, allowing it to hit multiple targets in its path.
     protected override void OnTargetHit(Collider target)
     {
         if (target.GetComponent<IAbilityTarget>() is IAbilityTarget abilityTarget)

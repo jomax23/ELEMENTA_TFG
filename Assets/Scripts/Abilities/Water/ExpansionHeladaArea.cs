@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Area effect that expands laterally from the caster. 
-/// Uses Raycast for obstacle detection to stop growth at walls/platforms.
-/// </summary>
+// Expanding frost zone that grows horizontally until it hits a wall or max length.
+// Dynamically resizes its BoxCollider to match the visual ice expansion.
 public class ExpansionHeladaArea : MonoBehaviour
 {
     [Header("Obstacle Detection")]
@@ -13,30 +11,24 @@ public class ExpansionHeladaArea : MonoBehaviour
     private BoxCollider hitbox;
     private int directionX;
     private float currentLength;
-    private LayerMask targetLayers;
     
-    // Runtime values (injected by AbilityData)
+    private LayerMask targetLayers;
     private float actualDamage;
     private float maxLength;
     private float expandSpeed;
     private float lifetime;
-    
     private bool isBlocked;
-    
+
     private void Awake()
     {
         hitbox = GetComponent<BoxCollider>();
         hitbox.isTrigger = true;
     }
 
-    /// <summary>
-    /// Initializes the expansion direction, target layers, and scaled damage.
-    /// </summary>
     public void Initialize(int facingDirection, LayerMask layers, float scaledDamage, float areaMaxLength, float areaExpandSpeed, float areaLifetime)
     {
         directionX = facingDirection;
         targetLayers = layers;
-        
         actualDamage = scaledDamage;
         maxLength = areaMaxLength;
         expandSpeed = areaExpandSpeed;
@@ -44,10 +36,9 @@ public class ExpansionHeladaArea : MonoBehaviour
 
         // Orient the transform to face the correct direction
         transform.right = Vector3.right * directionX;
-
         currentLength = 0f;
+        
         UpdateHitbox();
-
         Destroy(gameObject, lifetime);
     }
 
@@ -56,15 +47,14 @@ public class ExpansionHeladaArea : MonoBehaviour
         Expand();
     }
 
-    /// <summary>
-    /// Grows the area step-by-step, checking for obstacles via Raycast.
-    /// </summary>
+    // Grows the area step-by-step, checking for obstacles via Raycast.
     private void Expand()
     {
         if (isBlocked) return;
 
         float nextStep = expandSpeed * Time.deltaTime;
-        float checkDist = currentLength + nextStep + 0.1f; // Small margin to prevent tunneling
+        // Add a small margin to the raycast to prevent physics tunneling at high speeds
+        float checkDist = currentLength + nextStep + 0.1f; 
 
         if (Physics.Raycast(transform.position, transform.right, out RaycastHit hit, checkDist, obstacleLayers))
         {
@@ -80,6 +70,8 @@ public class ExpansionHeladaArea : MonoBehaviour
         UpdateHitbox();
     }
 
+    // Stretches the collider to match the current length of the ice.
+    // We offset the center by half the length so it expands outward from the origin.
     private void UpdateHitbox()
     {
         hitbox.size = new Vector3(currentLength, 1f, 1f);
@@ -89,12 +81,15 @@ public class ExpansionHeladaArea : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if ((targetLayers.value & (1 << other.gameObject.layer)) == 0) return;
-
-        IAbilityTarget target = other.GetComponent<IAbilityTarget>();
-        target?.ApplyDamage(actualDamage);
+        
+        if (other.GetComponent<IAbilityTarget>() is IAbilityTarget target)
+        {
+            target.ApplyDamage(actualDamage);
+        }
     }
 
 #if UNITY_EDITOR
+    // Visualize the expanding hitbox in the editor for easier tuning.
     private void OnDrawGizmos()
     {
         BoxCollider box = GetComponent<BoxCollider>();

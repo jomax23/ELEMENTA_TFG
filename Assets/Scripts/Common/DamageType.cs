@@ -1,7 +1,5 @@
-/// <summary>
-/// Defines the categories of damage. 
-/// Used to trigger specific reactions (e.g., hit flashes for punches).
-/// </summary>
+// Categorizes incoming damage so we can trigger specific reactions 
+// (e.g., a different hit flash or sound for a punch vs an ability).
 public enum DamageType
 {
     Generic,

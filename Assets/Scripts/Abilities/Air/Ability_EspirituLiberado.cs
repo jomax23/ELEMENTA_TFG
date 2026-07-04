@@ -1,26 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Air ability that makes the user intangible (invulnerable to damage/effects) 
-/// and triggers a visual "Spirit Mode" effect for a scaled duration.
-/// </summary>
+// "Spirit Mode": makes the user intangible (invulnerable) for a scaled duration.
+// Triggers a visual effect and uses a coroutine to track the timer.
 [CreateAssetMenu(fileName = "EspirituLiberado", menuName = "Abilities/Air/Espíritu Liberado")]
 public class Ability_EspirituLiberado : AbilityData
 {
     [Header("Spirit Mode Settings")]
-    [Tooltip("Base duration of the spirit mode. Scaled by affinity efficiency.")]
     [SerializeField] private float duration = 4f;
-
+    
     private bool isCancelled;
 
     public override string GetFormattedDescription(float efficiency)
     {
-        float scaledDuration = duration * efficiency;
-        return string.Format(descriptionTemplate, scaledDuration);
-
+        return string.Format(descriptionTemplate, duration * efficiency);
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
@@ -28,7 +23,7 @@ public class Ability_EspirituLiberado : AbilityData
         
         if (user == null || target == null)
         {
-            Debug.LogError($"[{nameof(Ability_EspirituLiberado)}] Required IAbilityUser/IAbilityTarget components not found on {owner.name}.", owner);
+            Debug.LogError($"[{nameof(Ability_EspirituLiberado)}] Required components not found on {owner.name}.", owner);
             return;
         }
 
@@ -40,14 +35,16 @@ public class Ability_EspirituLiberado : AbilityData
         }
 
         isCancelled = false;
-        float scaledDuration = duration * efficiency;
         
+        // Apply invulnerability and visual effects
         target.IsIntangible = true;
         fx.EnableSpiritMode();
         
-        user.RunCoroutine(SpiritRoutine(fx, target, scaledDuration));
+        // Start the duration timer
+        user.RunCoroutine(SpiritRoutine(fx, target, duration * efficiency));
     }
 
+    // Clean up flags and effects if interrupted before the timer finishes
     public override void Cancel(GameObject owner)
     {
         isCancelled = true;
@@ -61,7 +58,7 @@ public class Ability_EspirituLiberado : AbilityData
     private IEnumerator SpiritRoutine(SceneEffectsController fx, IAbilityTarget target, float scaledDuration)
     {
         yield return new WaitForSeconds(scaledDuration);
-
+        
         if (!isCancelled)
         {
             target.IsIntangible = false;

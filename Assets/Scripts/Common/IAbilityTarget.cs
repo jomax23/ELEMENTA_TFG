@@ -1,24 +1,23 @@
-/// <summary>
-/// Interface for any entity that can be targeted and affected by abilities 
-/// (e.g., Player, EnemyDummy). Handles status effects and damage application.
-/// </summary>
+// Implemented by anything that can receive abilities (Player, Enemies). 
+// Centralizes all status effects and damage application so abilities don't need to know 
+// if they're hitting a player or an AI.
 public interface IAbilityTarget
 {
-    /// <summary>Gets or sets whether the target is currently immune to damage/effects.</summary>
+    // God mode toggle. Blocks all incoming damage and effects.
     bool IsIntangible { get; set; }
 
-    /// <summary>Applies a physical knockback force to the target.</summary>
+    // Physical knockback.
     void ApplyImpulse(float force);
 
-    /// <summary>Applies a movement speed reduction for a specific duration.</summary>
+    // Movement speed reduction.
     void ApplySlow(float multiplier, float duration);
 
-    /// <summary>Applies a stun effect, preventing actions for a specific duration.</summary>
+    // Locks out actions/movement.
     void ApplyStun(float duration);
 
-    /// <summary>Applies direct damage to the target's health.</summary>
+    // Direct HP reduction.
     void ApplyDamage(float damage, DamageType type = DamageType.Generic);
 
-    /// <summary>Applies a Damage Over Time (DoT) burn effect.</summary>
+    // Damage over time (DoT).
     void ApplyBurn(float damagePerSecond, float duration);
 }

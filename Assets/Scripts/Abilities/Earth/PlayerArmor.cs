@@ -1,11 +1,7 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Manages a temporary armor state for the player.
-/// Absorbs a specific amount of damage, applies a movement speed penalty via IArmorUser,
-/// and visually swaps the character's material.
-/// </summary>
+// Handles the rock-body armor mechanic: absorbs damage, slows the player, and swaps the material.
 public class PlayerArmor : MonoBehaviour
 {
     [Header("Material Swap")]
@@ -24,9 +20,8 @@ public class PlayerArmor : MonoBehaviour
 
     private void Awake()
     {
-        // Decoupled from PlayerMovement: finds any component implementing IArmorUser
+        // Find any component implementing IArmorUser to apply the speed penalty
         armorUser = GetComponent<IArmorUser>();
-        
         if (armorUser == null)
         {
             Debug.LogWarning("[PlayerArmor] No IArmorUser component found on this GameObject.", this);
@@ -38,9 +33,7 @@ public class PlayerArmor : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Activates the armor, setting its absorption pool and applying the speed penalty.
-    /// </summary>
+    // Activates the armor, setting its absorption pool and applying the speed penalty.
     public void Activate(float absorptionAmount, float speedMultiplier)
     {
         if (IsActive) return;
@@ -53,23 +46,19 @@ public class PlayerArmor : MonoBehaviour
         armorUser?.SetArmorSpeedMultiplier(speedMultiplier);
     }
 
-    /// <summary>
-    /// Manually deactivates the armor before it is fully depleted.
-    /// </summary>
+    // Manually deactivates the armor before it is fully depleted.
     public void Deactivate()
     {
         if (!IsActive) return;
         Break();
     }
 
-    /// <summary>
-    /// Calculates damage reduction. Returns the remaining damage to be applied to health.
-    /// </summary>
+    // Calculates damage reduction. Returns the remaining damage to be applied to health.
     public float AbsorbDamage(float incomingDamage)
     {
         if (!IsActive) return incomingDamage;
 
-        // Armor reduces incoming damage by 50%
+        // Armor reduces incoming damage by 50% and drains the absorption pool
         float reducedDamage = incomingDamage * 0.5f;
         remainingAbsorption -= reducedDamage;
 
@@ -83,6 +72,7 @@ public class PlayerArmor : MonoBehaviour
         return reducedDamage;
     }
 
+    // Replaces all character materials with the solid armor material
     private void ApplyArmorMaterial()
     {
         if (characterRenderer == null || armorMaterial == null) return;
@@ -102,17 +92,18 @@ public class PlayerArmor : MonoBehaviour
         characterRenderer.materials = originalMaterials;
     }
 
+    // Cleans up state, restores speed, and reverts the visual material
     private void Break()
     {
         IsActive = false;
         RestoreOriginalMaterials();
-        armorUser?.SetArmorSpeedMultiplier(1f); // Restore normal speed
+        armorUser?.SetArmorSpeedMultiplier(1f); 
         OnArmorBroken?.Invoke();
     }
 
     private void OnDestroy()
     {
-        // Prevent memory leaks
+        // Prevent memory leaks from lingering event subscriptions
         OnArmorBroken = null;
     }
 }

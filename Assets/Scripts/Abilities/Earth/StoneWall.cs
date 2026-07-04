@@ -1,13 +1,9 @@
 using UnityEngine;
 
-/// <summary>
-/// A simple spatial control obstacle that self-destructs after a set lifetime.
-/// </summary>
+// Simple physical barrier that blocks paths and self-destructs after a set time.
 public class StoneWall : MonoBehaviour
 {
-    /// <summary>
-    /// Initializes the wall with its pre-scaled lifetime from the ScriptableObject.
-    /// </summary>
+    // Receives the pre-scaled lifetime directly from the AbilityData ScriptableObject
     public void Initialize(float scaledLifetime)
     {
         Destroy(gameObject, scaledLifetime);

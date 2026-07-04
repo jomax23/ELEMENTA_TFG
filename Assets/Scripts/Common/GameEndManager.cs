@@ -3,10 +3,8 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Singleton that evaluates win/lose conditions and handles the end-game UI.
-/// Listens to both health depletion and the match timer running out.
-/// </summary>
+// Singleton that handles win/lose conditions.
+// Listens to both immediate death events and the match timer running out.
 public class GameEndManager : MonoBehaviour
 {
     public static GameEndManager Instance { get; private set; }
@@ -27,7 +25,6 @@ public class GameEndManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
         if (endPanel != null) endPanel.SetActive(false);
     }
@@ -41,7 +38,6 @@ public class GameEndManager : MonoBehaviour
         // Listen to immediate death events
         if (playerHealth != null) 
             playerHealth.OnDeath += () => EndGame(false, "You have been defeated.");
-            
         if (enemyHealth != null) 
             enemyHealth.OnDeath += () => EndGame(true, "You have defeated the enemy.");
     }
@@ -52,16 +48,13 @@ public class GameEndManager : MonoBehaviour
             MatchController.Instance.OnMatchEnd -= EvaluateByHP;
     }
 
-    /// <summary>
-    /// Called when the match timer runs out. Compares remaining HP to determine the winner.
-    /// </summary>
+    // Called when the match timer runs out. Compares remaining HP to determine the winner.
     private void EvaluateByHP()
     {
         if (hasEnded) return;
-
+        
         bool playerWins = playerHealth.CurrentHealth > enemyHealth.CurrentHealth;
         string msg = playerWins ? "You have defeated the enemy." : "You have been defeated.";
-        
         EndGame(playerWins, msg);
     }
 
@@ -69,12 +62,11 @@ public class GameEndManager : MonoBehaviour
     {
         if (hasEnded) return;
         hasEnded = true;
-
+        
         Time.timeScale = 0f; // Pause the game
         
         if (resultText != null) resultText.text = message;
         if (endPanel != null) endPanel.SetActive(true);
-
         if (restartButton != null)
             restartButton.onClick.AddListener(RestartGame);
     }

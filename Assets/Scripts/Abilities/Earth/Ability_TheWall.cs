@@ -1,10 +1,7 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Earth ability that spawns a stone wall in front of the user.
-/// Acts as a spatial control tool. Currently, its stats are not scaled by efficiency,
-/// but this can be extended in the future (e.g., scaling its lifetime).
-/// </summary>
+// Spawns a physical barrier to block paths or projectiles.
+// Currently only scales lifetime, but structured to easily add more scaled stats later.
 [CreateAssetMenu(fileName = "ElMuro", menuName = "Abilities/Earth/El Muro")]
 public class Ability_TheWall : AbilityData
 {
@@ -31,13 +28,12 @@ public class Ability_TheWall : AbilityData
         }
 
         Transform t = owner.transform;
+        // Spawn slightly in front of the player
         Vector3 spawnPosition = t.position + t.forward * spawnDistance;
         spawnPosition.y += spawnOffset;
 
-        // Calculate scaled lifetime
         float scaledLifetime = lifetime * efficiency;
-
-        // Pass pre-scaled value to the wall prefab
+        
         StoneWall wall = Instantiate(wallPrefab, spawnPosition, Quaternion.identity);
         wall.Initialize(scaledLifetime);
     }

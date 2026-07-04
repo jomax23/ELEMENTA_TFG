@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Persistent Singleton that manages the current game session state,
-/// including the chosen player/enemy elements and affinity data.
-/// </summary>
+// Persistent Singleton that survives scene loads to hold match configuration.
+// Stores the chosen player/enemy elements and provides quick access to affinity calculations.
 public class GameSession : MonoBehaviour
 {
     public static GameSession Instance { get; private set; }
@@ -14,9 +12,10 @@ public class GameSession : MonoBehaviour
     public ElementType MainElement { get; private set; }
     public ElementType EnemyElement { get; private set; }
     
+    // Debug/Cheats for testing
     public bool EnemyDetectionActive { get; private set; }
     public bool ForceMasterControl { get; private set; }
-    
+
     public AffinityData AffinityData => affinityData;
     public bool HasChosenElement { get; private set; }
 
@@ -27,86 +26,69 @@ public class GameSession : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
+        
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // No default element — the player MUST choose one in the ElementSelector.
+        // Player must explicitly choose an element in the menu before starting
         HasChosenElement = false;
         EnemyDetectionActive = false;
         ForceMasterControl = false; 
-        
+
         if (affinityData == null)
             Debug.LogError("[GameSession] AffinityData is not assigned in the Inspector.", this);
     }
 
-    /// <summary>
-    /// Sets the player's main element and marks the selection as complete.
-    /// </summary>
     public void SetMainElement(ElementType element)
     {
         MainElement = element;
         HasChosenElement = true;
-        Debug.Log($"[GameSession] Main element set to: {element}");
     }
 
-    /// <summary>
-    /// Sets the enemy's element for the current match.
-    /// </summary>
     public void SetEnemyElement(ElementType element)
     {
         EnemyElement = element;
-        Debug.Log($"[GameSession] Enemy element set to: {element}");
     }
 
-    /// <summary>
-    /// Returns the number of abilities available for a specific element based on affinity.
-    /// </summary>
+    // --- Affinity Helpers ---
+    // These wrap the AffinityData lookups so callers don't need to pass the MainElement every time.
+
     public int GetAvailableAbilityCount(ElementType element)
     {
         if (affinityData == null) return 4;
         return affinityData.GetAvailableAbilityCount(MainElement, element);
     }
 
-    /// <summary>
-    /// Returns the damage efficiency multiplier for a specific element based on affinity.
-    /// </summary>
     public float GetEfficiency(ElementType element)
     {
         if (affinityData == null) return 1f;
         return affinityData.GetEfficiency(MainElement, element);
     }
 
-    /// <summary>
-    /// Returns the cooldown multiplier for a specific element based on affinity.
-    /// </summary>
     public float GetCooldownMultiplier(ElementType element)
     {
         if (affinityData == null) return 1f;
         return affinityData.GetCooldownMultiplier(MainElement, element);
     }
 
+    // --- Debug / Cheat Toggles ---
+
     public void SetEnemyDetectionActive(bool isActive)
     {
         EnemyDetectionActive = isActive;
-        Debug.Log($"[GameSession] Enemy Detection Range set to: {(isActive ? 50f : 0f)}");
     }
-    
+
     public void SetForceMasterControl(bool isActive)
     {
         ForceMasterControl = isActive;
-        Debug.Log($"[GameSession] Force Master Control set to: {isActive}");
     }
-    
-    /// <summary>
-    /// Resets the session state, requiring the player to choose an element again.
-    /// </summary>
+
+    // Clears session data when returning to the main menu
     public void ResetSession()
     {
         HasChosenElement = false;
         EnemyDetectionActive = false;
         ForceMasterControl = false;
-        
         Time.timeScale = 1f; 
     }
 }

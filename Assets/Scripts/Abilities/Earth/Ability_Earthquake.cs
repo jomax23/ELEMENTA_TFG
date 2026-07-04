@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Earth ability that spawns an earthquake area in front of the user.
-/// The area's stun duration and damage per second are scaled by elemental affinity efficiency.
-/// </summary>
+// Creates a lingering AoE that stuns and damages enemies.
+// Spawns slightly ahead of the player based on their facing direction.
 [CreateAssetMenu(fileName = "Terremoto", menuName = "Abilities/Earth/Terremoto")]
 public class Ability_Earthquake : AbilityData
 {
@@ -13,7 +11,7 @@ public class Ability_Earthquake : AbilityData
     [SerializeField] private float damagePerSecond = 5f;
     [SerializeField] private float spawnDistance = 2f;
     [SerializeField] private float spawnOffset = 0f;
-    
+
     [Header("Area Settings")]
     [SerializeField] private EarthquakeArea areaPrefab;
 
@@ -22,9 +20,8 @@ public class Ability_Earthquake : AbilityData
         float actualStun = stunDuration * efficiency;
         float actualDps = damagePerSecond * efficiency;
         return string.Format(descriptionTemplate, duration, actualStun, actualDps);
-
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
@@ -34,6 +31,7 @@ public class Ability_Earthquake : AbilityData
         Vector3 spawnPos = owner.transform.position + Vector3.right * dirX * spawnDistance + Vector3.up * spawnOffset;
 
         EarthquakeArea area = Instantiate(areaPrefab, spawnPos, Quaternion.identity);
+        // Pass the pre-scaled stun and DPS values to the area
         area.Initialize(user.TargetLayers, duration, stunDuration * efficiency, damagePerSecond * efficiency);
     }
 }

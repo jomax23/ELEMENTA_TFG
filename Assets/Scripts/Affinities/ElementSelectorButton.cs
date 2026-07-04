@@ -2,10 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Auxiliary component attached to each element button in the selector.
-/// Handles the visual state (selected / unselected) by modifying the element icon and text.
-/// </summary>
+// Handles the visual state (selected/unselected) for a single element button.
+// We manually control the colors to avoid fighting Unity's default Button transition tinting.
 public class ElementSelectorButton : MonoBehaviour
 {
     [Header("UI References")]
@@ -19,13 +17,9 @@ public class ElementSelectorButton : MonoBehaviour
 
     private void Awake()
     {
-        // Cache the Button component to avoid runtime allocation
         button = GetComponent<Button>();
     }
 
-    /// <summary>
-    /// Initializes the button with element data, colors, and click callback.
-    /// </summary>
     public void Initialize(ElementType element, Color unselected, Color selected, System.Action onClick)
     {
         selectedColor = selected;
@@ -37,7 +31,7 @@ public class ElementSelectorButton : MonoBehaviour
 
         if (button != null)
         {
-            // Disable default button transition to prevent color tinting conflicts
+            // Disable default color tinting so our manual SetSelected colors don't get overridden
             button.transition = Selectable.Transition.None;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => onClickCallback?.Invoke());
@@ -46,13 +40,10 @@ public class ElementSelectorButton : MonoBehaviour
         SetSelected(false);
     }
 
-    /// <summary>
-    /// Updates the visual state of the button based on selection.
-    /// </summary>
     public void SetSelected(bool isSelected)
     {
         Color targetColor = isSelected ? selectedColor : unselectedColor;
-
+        
         if (elementIcon != null) elementIcon.color = targetColor;
         if (labelText != null) labelText.color = targetColor;
     }

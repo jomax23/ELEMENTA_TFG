@@ -4,11 +4,9 @@ using UnityEngine.InputSystem;
 using TMPro;
 using System;
 
-/// <summary>
-/// Singleton that manages the match timer and the "Master Control" mechanic.
-/// Master Control is a temporary super-state triggered at the end of the match 
-/// that bypasses elemental affinities.
-/// </summary>
+// Manages the match timer and the "Master Control" mechanic.
+// Master Control is a temporary super-state triggered near the end of the match
+// that bypasses elemental affinities.
 public class MatchController : MonoBehaviour
 {
     public static MatchController Instance { get; private set; }
@@ -40,35 +38,30 @@ public class MatchController : MonoBehaviour
     // ── Private State ──────────────────────────────────────────────────────
     private enum MCState { Charging, Available, Active, Expired }
     private MCState currentState = MCState.Charging;
-    
     private float activeTimer;
     private Image fillImage;
 
     // =========================================================================
     // INITIALIZATION
     // =========================================================================
-
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        
         Instance = this;
         TimeRemaining = matchDuration;
 
+        // Debug cheat: force Master Control on for testing
         if (GameSession.Instance != null && GameSession.Instance.ForceMasterControl)
         {
             currentState = MCState.Active;
             IsMasterControlActive = true;
             IsAvailable = false;
-            activeTimer = float.MaxValue; // Duración infinita para la demo
-        
+            activeTimer = float.MaxValue; // Infinite duration for the demo
+            
             if (loadingSlider != null) loadingSlider.value = 1f;
             UpdateFillColor();
             OnMasterControlStart?.Invoke();
-        
-            Debug.Log("[MatchController] Master Control FORCED ACTIVE for demonstration.");
         }
-        // ── FIN NUEVO ──
         else
         {
             if (loadingSlider != null)
@@ -81,7 +74,6 @@ public class MatchController : MonoBehaviour
                 UpdateFillColor();
             }
         }
-
         UpdateTimerText();
     }
 
@@ -91,7 +83,6 @@ public class MatchController : MonoBehaviour
     // =========================================================================
     // UPDATE LOOP
     // =========================================================================
-
     private void Update()
     {
         if (IsMatchOver) return;
@@ -101,21 +92,10 @@ public class MatchController : MonoBehaviour
 
         switch (currentState)
         {
-            case MCState.Charging:
-                HandleChargingState();
-                break;
-
-            case MCState.Available:
-                HandleAvailableState();
-                break;
-
-            case MCState.Active:
-                HandleActiveState();
-                break;
-
-            case MCState.Expired:
-                loadingSlider.value = 0f;
-                break;
+            case MCState.Charging: HandleChargingState(); break;
+            case MCState.Available: HandleAvailableState(); break;
+            case MCState.Active: HandleActiveState(); break;
+            case MCState.Expired: loadingSlider.value = 0f; break;
         }
 
         if (TimeRemaining <= 0f)
@@ -129,7 +109,8 @@ public class MatchController : MonoBehaviour
     // =========================================================================
     // STATE HANDLERS
     // =========================================================================
-
+    
+    // Fills the UI slider as the match progresses towards the Master Control window
     private void HandleChargingState()
     {
         float chargeTime = matchDuration - triggerAtRemainingTime;
@@ -144,6 +125,7 @@ public class MatchController : MonoBehaviour
         }
     }
 
+    // Waits for the player to press the Master Control button
     private void HandleAvailableState()
     {
         loadingSlider.value = 1f;
@@ -158,6 +140,7 @@ public class MatchController : MonoBehaviour
         }
     }
 
+    // Drains the UI slider while Master Control is active
     private void HandleActiveState()
     {
         activeTimer -= Time.deltaTime;
@@ -176,11 +159,9 @@ public class MatchController : MonoBehaviour
     // =========================================================================
     // UI HELPERS
     // =========================================================================
-
     private void UpdateTimerText()
     {
         if (timerText == null) return;
-
         int minutes = Mathf.FloorToInt(TimeRemaining / 60f);
         int seconds = Mathf.FloorToInt(TimeRemaining % 60f);
         timerText.text = $"{minutes:00}:{seconds:00}";
@@ -189,7 +170,6 @@ public class MatchController : MonoBehaviour
     private void UpdateFillColor()
     {
         if (fillImage == null) return;
-        
         bool isInactive = currentState == MCState.Charging || currentState == MCState.Expired;
         fillImage.color = isInactive ? chargingColor : availableColor;
     }
@@ -197,7 +177,7 @@ public class MatchController : MonoBehaviour
     // =========================================================================
     // PUBLIC API
     // =========================================================================
-
-    /// <summary>Returns true if Master Control is currently active, bypassing affinities.</summary>
+    
+    // Called by the affinity system to check if penalties should be ignored
     public bool ShouldBypassAffinity() => IsMasterControlActive;
 }

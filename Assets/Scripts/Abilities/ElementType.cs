@@ -1,6 +1,4 @@
-/// <summary>
-/// Defines the core elemental types used in the game's affinity and ability systems.
-/// </summary>
+// Core elements driving the game's affinity and ability mechanics.
 public enum ElementType
 {
     Fire,

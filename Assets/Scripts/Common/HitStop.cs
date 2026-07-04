@@ -1,10 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Creates a "Hit Stop" effect by briefly pausing all Animators in the scene.
-/// This provides visual impact without freezing physics or Time.timeScale.
-/// </summary>
+// Creates a "hit stop" effect for impactful hits. 
+// Pauses all Animators briefly without touching Time.timeScale, 
+// so physics, cooldowns, and gameplay timers keep ticking normally.
 public class HitStop : MonoBehaviour
 {
     private static HitStop instance;
@@ -12,35 +11,31 @@ public class HitStop : MonoBehaviour
 
     private void Awake() => instance = this;
 
-    /// <summary>
-    /// Triggers the hit stop effect for the specified duration.
-    /// Restarts the timer if triggered again while already active.
-    /// </summary>
+    // Static entry point. Restarts the timer if hit again during an active hitstop to keep it snappy.
     public static void Trigger(float duration = 0.05f)
     {
         if (instance == null) return;
-
+        
         if (instance.currentRoutine != null)
             instance.StopCoroutine(instance.currentRoutine);
-
+            
         instance.currentRoutine = instance.StartCoroutine(instance.HitStopRoutine(duration));
     }
 
     private IEnumerator HitStopRoutine(float duration)
     {
-        // Find all animators and pause them
+        // Find all animators and freeze them
         Animator[] anims = FindObjectsByType<Animator>(FindObjectsSortMode.None);
-        
         for (int i = 0; i < anims.Length; i++)
             anims[i].speed = 0f;
 
-        // Wait using realtime to ignore Time.timeScale (though we aren't changing it here, it's safer)
+        // Wait using realtime so we aren't affected by Time.timeScale (even though we don't change it here, it's safer)
         yield return new WaitForSecondsRealtime(duration);
 
         // Resume all animators
         for (int i = 0; i < anims.Length; i++)
             anims[i].speed = 1f;
-
+            
         currentRoutine = null;
     }
 }

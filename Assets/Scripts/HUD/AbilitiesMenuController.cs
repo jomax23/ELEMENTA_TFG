@@ -2,10 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Controls the Abilities Menu (pause menu).
-/// Handles menu toggling, time scale pausing, and routes UI selections to the HUD.
-/// </summary>
+// Controls the in-game pause menu. 
+// Handles time scale pausing and routes UI selections to the HUD.
 public class AbilitiesMenuController : MonoBehaviour
 {
     [Header("Menu")]
@@ -26,24 +24,18 @@ public class AbilitiesMenuController : MonoBehaviour
     private void Update()
     {
         if (openMenuAction.action.WasPressedThisFrame())
-        {
             ToggleMenu();
-        }
     }
 
-    /// <summary>
-    /// Toggles the menu visibility and pauses/unpauses the game time.
-    /// </summary>
     private void ToggleMenu()
     {
         isOpen = !isOpen;
         menuRoot.SetActive(isOpen);
-
+        
         if (isOpen)
         {
-            // Pause the game
-            Time.timeScale = 0f;
-
+            Time.timeScale = 0f; // Pause the game
+            
             // Sync HUD with current player state
             currentElement = playerAbilities.CurrentElement;
             menuHUD.ShowElement(currentElement);
@@ -51,14 +43,10 @@ public class AbilitiesMenuController : MonoBehaviour
         }
         else
         {
-            // Resume the game
-            Time.timeScale = 1f;
+            Time.timeScale = 1f; // Resume the game
         }
     }
 
-    /// <summary>
-    /// Called by Element UI buttons to change the selected element.
-    /// </summary>
     public void SelectElement(ElementType element)
     {
         currentElement = element;
@@ -66,33 +54,23 @@ public class AbilitiesMenuController : MonoBehaviour
         menuHUD.ShowAbilities(element);
     }
 
-    /// <summary>
-    /// Called by Ability UI buttons to update the detailed info panel.
-    /// </summary>
     public void SelectAbility(AbilityData ability)
     {
         currentAbility = ability;
         menuHUD.ShowAbilityInfo(ability);
     }
 
-    /// <summary>
-    /// Returns to the Main Menu scene.
-    /// CRITICAL: Resets Time.timeScale to 1f and hides the menu to ensure 
-    /// the next match starts completely unpaused and clean.
-    /// </summary>
+    // CRITICAL: Resets Time.timeScale to 1f before loading the scene.
+    // If we don't do this, the next match will start completely frozen if the 
+    // player quits to the main menu while the pause menu is open.
     public void Return()
     {
-        // 1. Force unpause the game immediately
         Time.timeScale = 1f;
-        
-        // 2. Reset internal state
         isOpen = false;
+        
         if (menuRoot != null)
-        {
             menuRoot.SetActive(false);
-        }
-
-        // 3. Load the main menu
+            
         SceneManager.LoadScene("Scenes/MainMenu");
     }
 }

@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Fire ability that spawns a standard fireball projectile from a designated spawn point.
-/// </summary>
+// Spawns a standard fireball projectile from the character's hand.
+// All damage and burn stats scale with elemental affinity.
 [CreateAssetMenu(fileName = "BolaDeFuego", menuName = "Abilities/Fire/Bola de Fuego")]
 public class Ability_FireBall : AbilityData
 {
@@ -11,10 +10,10 @@ public class Ability_FireBall : AbilityData
     [SerializeField] private float impactDamage = 10f;
     [SerializeField] private float burnDamagePerSecond = 2f;
     [SerializeField] private float burnDuration = 3f;
-    
+
     [Header("Fireball Prefab")]
     [SerializeField] private FireballProjectile fireballPrefab;
-    
+
     public override string GetFormattedDescription(float efficiency)
     {
         float actualImpact = impactDamage * efficiency;
@@ -22,7 +21,7 @@ public class Ability_FireBall : AbilityData
         float actualBurnDur = burnDuration * efficiency;
         return string.Format(descriptionTemplate, actualImpact, actualBurnDps, actualBurnDur);
     }
-    
+
     public override void Activate(GameObject owner, float efficiency = 1f)
     {
         IAbilityUser user = owner.GetComponent<IAbilityUser>();
@@ -32,6 +31,7 @@ public class Ability_FireBall : AbilityData
             return;
         }
 
+        // Find the exact bone/empty to spawn the projectile from
         Transform spawnPoint = FindDeep(owner.transform, "LeftHandSpawn");
         if (spawnPoint == null)
         {
@@ -48,9 +48,12 @@ public class Ability_FireBall : AbilityData
         float scaledBurnDps = burnDamagePerSecond * efficiency;
         float scaledBurnDur = burnDuration * efficiency;
 
+        // Rotate the projectile to face the correct direction based on player facing
         Quaternion rotation = Quaternion.Euler(0f, 0f, 90f * user.FacingDirection);
+        
         FireballProjectile fireball = Instantiate(fireballPrefab, spawnPoint.position, rotation);
         fireball.Initialize(user.FacingDirection, user.TargetLayers, scaledDamage, scaledBurnDps, scaledBurnDur);
+        
         yield return null;
     }
 }

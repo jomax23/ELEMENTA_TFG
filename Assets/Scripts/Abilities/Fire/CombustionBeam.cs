@@ -1,9 +1,8 @@
 using UnityEngine;
 
-/// <summary>
-/// Visual beam effect that tracks a starting point, raycasts for obstacles, 
-/// and fades out over a set duration.
-/// </summary>
+// Visual beam for the Max Combustion ability. 
+// Dynamically shortens if it hits a wall, and fades out using a MaterialPropertyBlock 
+// to avoid breaking Unity's draw call batching.
 [RequireComponent(typeof(LineRenderer))]
 public class CombustionBeam : MonoBehaviour
 {
@@ -29,9 +28,6 @@ public class CombustionBeam : MonoBehaviour
         mpb = new MaterialPropertyBlock();
     }
 
-    /// <summary>
-    /// Initializes the beam with its trajectory and lifespan.
-    /// </summary>
     public void Initialize(Transform start, Vector3 dir, float distance, LayerMask obstacles, float beamDuration)
     {
         startPoint = start;
@@ -46,7 +42,7 @@ public class CombustionBeam : MonoBehaviour
     {
         timer += Time.deltaTime;
 
-        // Auto-cleanup when duration expires or origin is destroyed
+        // Auto-cleanup when duration expires or if the caster is destroyed
         if (timer >= duration || startPoint == null)
         {
             Destroy(gameObject);
@@ -56,7 +52,7 @@ public class CombustionBeam : MonoBehaviour
         Vector3 start = startPoint.position;
         Vector3 end = start + direction * maxDistance;
 
-        // Shorten beam if it hits an obstacle
+        // Shorten the beam if it hits a wall or obstacle
         if (Physics.Raycast(start, direction, out RaycastHit hit, maxDistance, obstacleLayers))
         {
             end = hit.point;
@@ -65,12 +61,15 @@ public class CombustionBeam : MonoBehaviour
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
 
-        // Fade out effect based on remaining time
+        // Fade out the alpha over time. 
+        // We use MaterialPropertyBlock so we don't create unique material instances at runtime.
         float alpha = 1f - Mathf.Clamp01(timer / duration);
         beamRenderer.GetPropertyBlock(mpb);
+        
         Color baseColor = Color.white;
         baseColor.a = alpha;
         mpb.SetColor(BaseColorID, baseColor);
+        
         beamRenderer.SetPropertyBlock(mpb);
     }
 }
